@@ -147,4 +147,17 @@ document.getElementById("nav").addEventListener("click",e=>{const b=e.target.clo
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 document.getElementById("dailyBtn").addEventListener("click",()=>{const today=new Date().toDateString();if(state.dailyDate===today)return;state.streak++;state.dailyDate=today;state.points+=25;save();toast("Daily check-in claimed · +25 demo points")});
 document.getElementById("saveProfile").addEventListener("click",()=>{state.name=document.getElementById("playerName").value.trim()||"Player";save();toast("Profile saved")});
-document.getElementById("copyRef").addEventListener("click",async()=>{try{a
+document.getElementById("copyRef").addEventListener("click", async () => {
+  const code = document.getElementById("refCode").value;
+  try {
+    await navigator.clipboard.writeText(code);
+    toast("Referral code copied!");
+  } catch (e) {
+    toast("Unable to copy referral code");
+  }
+});
+
+render();
+</script>
+</body>
+</html>
