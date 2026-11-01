@@ -73,4 +73,40 @@ function openAuth(mode){setMode(mode);document.getElementById("authWrap").classL
 function closeAuth(){document.getElementById("authWrap").classList.remove("show")}
 function render(){
 document.getElementById("points").textContent=Number(state.points)||0;document.getElementById("completed").textContent=state.completed.length;document.getElementById("referrals").textContent=Number(state.referrals)||0;document.getElementById("playerName").value=state.name||"Player";
-const claimed=state.dailyDate===new Date().toDateString();document.getElementById("dailyProgress").style.width=claimed?"100%":"60%";document.getElementById("dailyBtn").disabled=claimed;document.getElementById("dailyBtn").textContent=claimed?"Claimed today":"Claim +25";document.getElementById("streakText").textContent=`${Math.max(1,state.streak)} day${st
+const claimed=state.dailyDate===new Date().toDateString();document.getElementById("dailyProgress").style.width=claimed?"100%":"60%";document.getElementById("dailyBtn").disabled=claimed;document.getElementById("dailyBtn").textContent=claimed?"Claimed today":"Claim +25";document.getElementById("streakText").textContent=`${Math.max(1,state.streak)} day${state.streak===1?"":"s"} · Demo streak`;
+document.getElementById("missionList").innerHTML=missions.map(m=>`<div class="mission"><div><h4>${esc(m.name)}</h4><div class="muted">${esc(m.desc)}</div></div><div style="display:flex;align-items:center;gap:12px"><span class="reward">+${m.reward} pts</span><button class="btn ${state.completed.includes(m.id)?"secondary":""}" ${state.completed.includes(m.id)?"disabled":""} onclick="claimMission('${m.id}')">${state.completed.includes(m.id)?"Completed":"Claim"}</button></div></div>`).join("");
+const rows=[["1","NovaRider","2,450"],["2","PixelKnight","1,980"],["3","SkyHunter","1,720"],["4",state.name,state.points.toLocaleString()],["5","PuzzleFox","890"]];document.getElementById("leaderRows").innerHTML=rows.map(r=>`<div class="leader-row"><span>${r[0]}. &nbsp; ${esc(r[1])} ${r[1]===state.name?"(You)":""}</span><strong>${r[2]} pts</strong></div>`).join("")
+}
+function claimMission(id){if(state.completed.includes(id))return;const m=missions.find(x=>x.id===id);if(!m)return;state.completed.push(id);state.points+=m.reward;if(id==="invite")state.referrals++;save();toast(`Mission completed · +${m.reward} demo points`)}
+function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");state.points+=20;save();toast("Catalogue explored · +20 demo points")}}
+document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)go(b.dataset.page)});document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+document.getElementById("dailyBtn").addEventListener("click",()=>{const d=new Date().toDateString();if(state.dailyDate===d)return;state.streak++;state.dailyDate=d;state.points+=25;save();toast("Daily check-in claimed · +25 demo points")});
+document.getElementById("saveProfile").addEventListener("click",async()=>{const n=document.getElementById("playerName").value.trim().slice(0,24)||"Player";state.name=n;save();if(currentUser&&db){try{await db.collection("users").doc(currentUser.uid).update({displayName:n,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});toast("Profile saved to your account")}catch(e){console.error(e);toast("Saved on this device; cloud update failed")}}else toast("Profile saved on this device")});
+document.getElementById("copyRef").addEventListener("click",async()=>{const code=document.getElementById("refCode").value;try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(code);else{const x=document.createElement("textarea");x.value=code;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove()}toast("Referral code copied!")}catch(e){toast("Unable to copy referral code")}});
+document.getElementById("authOpen").addEventListener("click",async()=>{if(currentUser){try{await auth.signOut();toast("You have logged out")}catch(e){toast(authMessage(e))}}else openAuth("register")});
+document.getElementById("showRegister").addEventListener("click",()=>setMode("register"));document.getElementById("showLogin").addEventListener("click",()=>setMode("login"));document.getElementById("authClose").addEventListener("click",closeAuth);document.getElementById("authWrap").addEventListener("click",e=>{if(e.target.id==="authWrap")closeAuth()});
+document.getElementById("connectTop").addEventListener("click",()=>go("wallet"));document.getElementById("connectWallet").addEventListener("click",()=>toast("Wallet connection will be added in a later version"));
+document.getElementById("authForm").addEventListener("submit",async e=>{
+e.preventDefault();clearAuthError();if(!firebaseReady||!auth||!db){showAuthError("Firebase is unavailable. Refresh the page and check your internet connection.");return}
+const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value,name=document.getElementById("authName").value.trim().slice(0,24),submit=document.getElementById("authSubmit");submit.disabled=true;submit.textContent=authMode==="register"?"Creating account...":"Logging in...";
+try{
+let result;
+if(authMode==="register"){
+result=await auth.createUserWithEmailAndPassword(email,password);if(name)await result.user.updateProfile({displayName:name});
+await db.collection("users").doc(result.user.uid).set({uid:result.user.uid,displayName:name||"Player",email:result.user.email,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+state.name=name||"Player";save();toast("GameVerse account created!");
+}else{
+result=await auth.signInWithEmailAndPassword(email,password);const ref=db.collection("users").doc(result.user.uid),snap=await ref.get();
+if(!snap.exists){const fallback=result.user.displayName||"Player";await ref.set({uid:result.user.uid,displayName:fallback,email:result.user.email,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});state.name=fallback}
+else{const data=snap.data()||{};state.name=data.displayName||result.user.displayName||"Player"}save();toast("Login successful. Welcome to GameVerse!")
+}
+closeAuth();document.getElementById("authForm").reset();
+}catch(error){console.error("GameVerse authentication error:",error);showAuthError(authMessage(error))}
+finally{submit.disabled=false;submit.textContent=authMode==="register"?"Create GameVerse account":"Login"}
+});
+if(firebaseReady&&auth){auth.onAuthStateChanged(async user=>{currentUser=user||null;document.getElementById("authStatus").textContent=user?(user.email||"Logged in"):"Guest mode";document.getElementById("authOpen").textContent=user?"Logout":"Login / Sign up";if(user){try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const d=snap.data()||{};if(d.displayName){state.name=d.displayName;save()}}}catch(e){console.error("Profile load failed:",e)}}})}
+else{document.getElementById("authStatus").textContent="Firebase unavailable";console.error("Firebase SDK did not load or initialize")}
+render();
+</script>
+</body>
+</html>
