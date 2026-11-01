@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d1b">
+<title>GameVerse — Play. Complete. Earn.</title>
+<style>
+:root{--bg:#080d1b;--panel:#111a2e;--panel2:#0d1527;--line:#24314c;--text:#edf4ff;--muted:#9aabc5;--cyan:#42e8ff;--blue:#6685ff;--purple:#a66cff;--green:#63e6a6}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% -15%,#1d3260 0,transparent 40%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,Segoe UI,Arial,sans-serif}
+button,input{font:inherit}button{cursor:pointer}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.sidebar{padding:26px 18px;border-right:1px solid var(--line);background:#091123d9;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:850;letter-spacing:.3px;margin:0 0 35px 5px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple));display:grid;place-items:center;color:#07101d;font-weight:950;box-shadow:0 0 25px #42e8ff44}.brand span{color:var(--cyan)}.nav-label{color:#6f819f;text-transform:uppercase;letter-spacing:1.6px;font-size:10px;font-weight:800;margin:22px 10px 9px}.nav button{width:100%;border:0;background:transparent;color:var(--muted);padding:12px;border-radius:11px;text-align:left;margin:3px 0;display:flex;gap:12px;align-items:center}.nav button.active,.nav button:hover{background:#182743;color:var(--cyan)}.side-note{position:absolute;bottom:20px;left:18px;right:18px;border:1px solid var(--line);background:var(--panel2);border-radius:13px;padding:13px;color:var(--muted);font-size:12px}.main{padding:28px clamp(18px,4vw,48px);max-width:1500px;width:100%;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:800}.title{font-size:clamp(25px,4vw,36px);margin:5px 0 0;line-height:1.15}.top-actions{display:flex;gap:10px;align-items:center}.pill{border:1px solid var(--line);background:#101b30;color:var(--muted);border-radius:999px;padding:9px 13px;font-size:12px}.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:800;color:#06111d;background:linear-gradient(100deg,var(--cyan),#8ab9ff);box-shadow:0 7px 24px #42e8ff22}.btn.secondary{background:#182743;color:var(--text);border:1px solid var(--line);box-shadow:none}.grid{display:grid;gap:17px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin:22px 0}.card{background:linear-gradient(145deg,#131f36,#0e172a);border:1px solid var(--line);border-radius:17px;padding:19px;box-shadow:0 12px 35px #0002}.stat-label{font-size:12px;color:var(--muted)}.stat-value{font-size:27px;font-weight:850;margin-top:7px}.stat-sub{font-size:11px;color:var(--green);margin-top:3px}.hero{display:grid;grid-template-columns:1.5fr .8fr;gap:17px}.hero-card{min-height:225px;padding:27px;position:relative;overflow:hidden;background:linear-gradient(110deg,#142b4a,#171b3c 70%,#281b4a);border:1px solid #30456b;border-radius:19px}.hero-card:after{content:"GV";position:absolute;right:22px;bottom:-52px;font-size:190px;font-weight:950;color:#ffffff08;line-height:1}.hero-card h2{font-size:28px;max-width:480px;line-height:1.15;margin:10px 0}.hero-card p{color:#b6c6df;max-width:460px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.daily{display:flex;flex-direction:column;justify-content:space-between}.daily h3{margin:0}.progress{height:8px;background:#25334d;border-radius:20px;overflow:hidden;margin:12px 0}.progress span{display:block;height:100%;width:60%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:20px}.section-head{display:flex;justify-content:space-between;align-items:center;margin:28px 0 13px}.section-head h2{font-size:18px;margin:0}.section-head small{color:var(--muted)}.games{grid-template-columns:repeat(3,minmax(0,1fr))}.game{padding:0;overflow:hidden}.game-art{height:110px;display:grid;place-items:center;font-size:42px;background:linear-gradient(135deg,#183c5b,#342451)}.game:nth-child(2) .game-art{background:linear-gradient(135deg,#1d4a45,#1e315e)}.game:nth-child(3) .game-art{background:linear-gradient(135deg,#53345c,#20385b)}.game-body{padding:15px}.game-body h3{margin:0 0 3px}.muted{color:var(--muted);font-size:12px}.mission-list{display:grid;gap:10px}.mission{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;background:#101a2d;border:1px solid var(--line);border-radius:13px}.mission h4{margin:0 0 3px;font-size:14px}.reward{color:var(--cyan);font-weight:800;white-space:nowrap}.mission button{padding:8px 12px;font-size:12px}.two-col{grid-template-columns:1.3fr .7fr}.leader-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}.leader-row:last-child{border:0}.page{display:none}.page.active{display:block}.empty{padding:40px;text-align:center;color:var(--muted)}.notice{border:1px solid #6b5b2a;background:#332a142e;color:#e8d69a;border-radius:12px;padding:12px 14px;font-size:12px;margin-top:20px}.wallet-box{text-align:center;padding:35px}.wallet-icon{font-size:42px}.field{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#0a1324;color:var(--text);margin:7px 0 14px}.profile-form{max-width:430px}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#e9f7ff;color:#081322;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 10px 30px #0008;display:none;z-index:10}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:14px;border-right:0;border-bottom:1px solid var(--line)}.brand{margin:0 0 10px}.nav{display:flex;overflow:auto;gap:5px}.nav-label,.side-note{display:none}.nav button{white-space:nowrap;width:auto;padding:9px 11px}.main{padding:22px 15px}.stats{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:580px){.topbar{align-items:flex-start;flex-direction:column}.top-actions{width:100%;justify-content:space-between}.games{grid-template-columns:1fr}.game{display:grid;grid-template-columns:105px 1fr}.game-art{height:100%;min-height:115px}.stat-value{font-size:23px}.hero-card{padding:21px}.hero-card h2{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">G</div>Game<span>Verse</span></div>
+  <div class="nav-label">Workspace</div>
+  <nav class="nav" id="nav">
+    <button class="active" data-page="overview">◈ Overview</button>
+    <button data-page="games">🎮 Games</button>
+    <button data-page="missions">✦ Missions</button>
+    <button data-page="leaderboard">♛ Leaderboard</button>
+    <button data-page="wallet">◉ My Wallet</button>
+    <button data-page="profile">☻ Profile</button>
+  </nav>
+  <div class="side-note"> <strong style="color:var(--cyan)">Prototype mode</strong><br>Points shown here are demo points, not cryptocurrency and cannot be traded or withdrawn.</div>
+</aside>
+<main class="main">
+  <header class="topbar">
+    <div><div class="eyebrow">The gaming rewards hub</div><h1 class="title" id="pageTitle">Welcome to GameVerse</h1></div>
+    <div class="top-actions"><span class="pill">BASE · TESTNET PLANNED</span><button class="btn secondary" id="connectTop">Connect wallet</button></div>
+  </header>
+
+  <section class="page active" id="overview">
+    <div class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">Play · Complete · Earn</div>
+        <h2>Your next gaming adventure starts here.</h2>
+        <p>Discover games, take on missions and collect GameVerse Points. Build your profile while we prepare the blockchain features.</p>
+        <div class="hero-actions"><button class="btn" data-go="missions">Explore missions</button><button class="btn secondary" data-go="games">Browse games</button></div>
+      </div>
+      <div class="card daily">
+        <div><div class="eyebrow">Daily check-in</div><h3 style="margin-top:8px">Keep your streak alive</h3><p class="muted">Check in once per day to collect demo points.</p></div>
+        <div><div class="progress"><span id="dailyProgress"></span></div><div style="display:flex;justify-content:space-between;align-items:center"><small class="muted" id="streakText">Day 1 · Demo streak</small><button class="btn" id="dailyBtn">Claim +25</button></div></div>
+      </div>
+    </div>
+    <div class="grid stats">
+      <div class="card"><div class="stat-label">Your GV Points</div><div class="stat-value" id="points">125</div><div class="stat-sub">Demo balance</div></div>
+      <div class="card"><div class="stat-label">Missions completed</div><div class="stat-value" id="completed">0</div><div class="stat-sub">Keep progressing</div></div>
+      <div class="card"><div class="stat-label">Referral invites</div><div class="stat-value" id="referrals">0</div><div class="stat-sub">Demo counter</div></div>
+      <div class="card"><div class="stat-label">Current rank</div><div class="stat-value">Rookie</div><div class="stat-sub">Your journey begins</div></div>
+    </div>
+    <div class="section-head"><h2>Featured games</h2><small>Demo catalogue</small></div>
+    <div class="grid games">
+      <article class="card game"><div class="game-art">🏎️</div><div class="game-body"><h3>Neon Racers</h3><div class="muted">Racing · Community missions</div></div></article>
+      <article class="card game"><div class="game-art">⚔️</div><div class="game-body"><h3>Battle Arena</h3><div class="muted">Action · Skill challenges</div></div></article>
+      <article class="card game"><div class="game-art">🧩</div><div class="game-body"><h3>Puzzle Quest</h3><div class="muted">Puzzle · Daily tasks</div></div></article>
+    </div>
+    <div class="notice">This is an early website prototype. Game names and missions are illustrative. GameVerse is not affiliated with PUBG, BGMI, Free Fire or any other game publisher.</div>
+  </section>
+
+  <section class="page" id="games">
+    <div class="section-head"><h2>Explore games</h2><small>Initial demo catalogue</small></div>
+    <div class="grid games">
+      <article class="card game"><div class="game-art">🏎️</div><div class="game-body"><h3>Neon Racers</h3><div class="muted">Racing · Daily challenges</div><p class="muted">Complete community racing tasks and submit proof where required.</p><button class="btn secondary" data-go="missions">View missions</button></div></article>
+      <article class="card game"><div class="game-art">⚔️</div><div class="game-body"><h3>Battle Arena</h3><div class="muted">Action · Skill challenges</div><p class="muted">Join fair-play challenges. Official game integrations are not enabled.</p><button class="btn secondary" data-go="missions">View missions</button></div></article>
+      <article class="card game"><div class="game-art">🧩</div><div class="game-body"><h3>Puzzle Quest</h3><div class="muted">Puzzle · Daily tasks</div><p class="muted">Try daily puzzle activities and track your progress.</p><button class="btn secondary" data-go="missions">View missions</button></div></article>
+    </div>
+  </section>
+
+  <section class="page" id="missions">
+    <div class="section-head"><h2>Available missions</h2><small>Claim once per browser profile</small></div>
+    <div class="mission-list" id="missionList"></div>
+    <div class="notice">Mission rewards are simulated GV Points stored in this browser. Real game-result verification, anti-cheat checks and on-chain payouts must be built before any real rewards are issued.</div>
+  </section>
+
+  <section class="page" id="leaderboard">
+    <div class="section-head"><h2>Community leaderboard</h2><small>Sample data + your demo profile</small></div>
+    <div class="card" id="leaderRows"></div>
+  </section>
+
+  <section class="page" id="wallet">
+    <div class="card wallet-box">
+      <div class="wallet-icon">◉</div><h2>Connect your wallet</h2>
+      <p class="muted" style="max-width:480px;margin:0 auto 20px">Wallet connection is a placeholder in this prototype. No wallet permissions or transactions are requested.</p>
+      <button class="btn" id="connectWallet">Wallet connection coming soon</button>
+      <p class="muted" id="walletStatus">Not connected</p>
+    </div>
+    <div class="notice">GV Points are not GVX tokens. No token has been deployed, and there is no live token balance, sale, staking or withdrawal function yet.</div>
+  </section>
+
+  <section class="page" id="profile">
+    <div class="card profile-form"><h2>Your profile</h2><label class="muted" for="playerName">Display name</label><input class="field" id="playerName" maxlength="24" placeholder="Enter a gaming name"><button class="btn" id="saveProfile">Save profile</button><hr style="border:0;border-top:1px solid var(--line);margin:22px 0"><h3>Invite friends</h3><p class="muted">Referral tracking is a demo only. No referral rewards are issued yet.</p><div style="display:flex;gap:8px"><input class="field" id="refCode" value="GAMEVERSE-DEMO" readonly><button class="btn secondary" id="copyRef">Copy</button></div></div>
+  </section>
+  <footer class="muted" style="text-align:center;padding:35px 0 10px">GameVerse · Early prototype · GV Points are demo-only and have no monetary value.</footer>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const defaults={points:125,completed:[],dailyDate:"",streak:0,referrals:0,name:"Player"};
+let state;
+try{state={...defaults,...JSON.parse(localStorage.getItem("gv_demo_state")||"{}")}}catch(e){state={...defaults}}
+const missions=[
+{id:"profile",name:"Complete your player profile",desc:"Choose a display name for your GameVerse profile.",reward:30},
+{id:"explore",name:"Explore the game catalogue",desc:"Visit the Games section and discover the demo titles.",reward:20},
+{id:"daily",name:"Daily community check-in",desc:"Claim your daily check-in reward from the overview.",reward:25},
+{id:"invite",name:"Share GameVerse with a friend",desc:"Copy your demo referral code. No real referral is tracked.",reward:15}
+];
+function save(){localStorage.setItem("gv_demo_state",JSON.stringify(state));render()}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2400)}
+function render(){
+ document.getElementById("points").textContent=state.points;
+ document.getElementById("completed").textContent=state.completed.length;
+ document.getElementById("referrals").textContent=state.referrals;
+ document.getElementById("playerName").value=state.name;
+ document.getElementById("dailyProgress").style.width=state.dailyDate===new Date().toDateString()?"100%":"60%";
+ document.getElementById("dailyBtn").disabled=state.dailyDate===new Date().toDateString();
+ document.getElementById("dailyBtn").textContent=state.dailyDate===new Date().toDateString()?"Claimed today":"Claim +25";
+ document.getElementById("streakText").textContent=`${Math.max(1,state.streak)} day${state.streak===1?"":"s"} · Demo streak`;
+ document.getElementById("missionList").innerHTML=missions.map(m=>`<div class="mission"><div><h4>${m.name}</h4><div class="muted">${m.desc}</div></div><div style="display:flex;align-items:center;gap:12px"><span class="reward">+${m.reward} pts</span><button class="btn ${state.completed.includes(m.id)?"secondary":""}" ${state.completed.includes(m.id)?"disabled":""} onclick="claimMission('${m.id}')">${state.completed.includes(m.id)?"Completed":"Claim"}</button></div></div>`).join("");
+ const rows=[["1","NovaRider","2,450"],["2","PixelKnight","1,980"],["3","SkyHunter","1,720"],["4",state.name,state.points.toLocaleString()],["5","PuzzleFox","890"]];
+ document.getElementById("leaderRows").innerHTML=rows.map(r=>`<div class="leader-row"><span>${r[0]}. &nbsp; ${r[1]} ${r[1]===state.name?"(You)":""}</span><strong>${r[2]} pts</strong></div>`).join("");
+}
+function claimMission(id){if(state.completed.includes(id))return;const m=missions.find(x=>x.id===id);if(!m)return;state.completed.push(id);state.points+=m.reward;if(id==="invite")state.referrals++;save();toast(`Mission completed · +${m.reward} demo points`)}
+function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");state.points+=20;save();toast("Catalogue explored · +20 demo points")}}
+document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)go(b.dataset.page)});
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+document.getElementById("dailyBtn").addEventListener("click",()=>{const today=new Date().toDateString();if(state.dailyDate===today)return;state.streak++;state.dailyDate=today;state.points+=25;save();toast("Daily check-in claimed · +25 demo points")});
+document.getElementById("saveProfile").addEventListener("click",()=>{state.name=document.getElementById("playerName").value.trim()||"Player";save();toast("Profile saved")});
+document.getElementById("copyRef").addEventListener("click",async()=>{try{await navigator.clipboard.writeText("GAMEVERSE-DEMO");toast("Demo referral code copied")}catch(e){toast("Referral code: GAMEVERSE-DEMO")}});
+function walletNotice(){toast("Wallet connection is not enabled in this demo");document.getElementById("walletStatus").textContent="Wallet connection not enabled in prototype";}
+document.getElementById("connectTop").addEventListener("click",walletNotice);document.getElementById("connectWallet").addEventListener("click",walletNotice);
+render();
+</script>
+</body>
+</html>
