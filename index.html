@@ -15,7 +15,7 @@
 <aside class="sidebar">
 <div class="brand"><div class="logo">G</div>Game<span>Verse</span></div><div class="nav-label">Workspace</div>
 <nav class="nav" id="nav">
-<button class="active" data-page="overview">◈ Overview</button><button data-page="games">🎮 Games</button><button data-page="missions">✦ Missions</button><button data-page="leaderboard">♛ Leaderboard</button><button data-page="wallet">◉ My Wallet</button><button data-page="profile">☻ Profile</button>
+<button class="active" data-page="overview">◈ Overview</button><button data-page="games">🎮 Games</button><button data-page="missions">✦ Missions</button><button data-page="leaderboard">♛ Leaderboard</button><button data-page="wallet">◉ My Wallet</button><button data-page="profile">☻ Profile</button><button data-page="admin" id="adminNav" style="display:none">⚙ Admin Panel</button>
 </nav>
 <div class="side-note"><strong style="color:var(--cyan)">Prototype mode</strong><br>Points shown here are demo points, not cryptocurrency and cannot be traded or withdrawn.</div>
 </aside>
@@ -37,6 +37,11 @@
 <section class="page" id="leaderboard"><div class="section-head"><h2>Community leaderboard</h2><small>Sample data + your demo profile</small></div><div class="card" id="leaderRows"></div></section>
 <section class="page" id="wallet"><div class="card wallet-box"><div style="font-size:42px">◉</div><h2>Connect your wallet</h2><p class="muted" style="max-width:480px;margin:0 auto 20px">Wallet connection is a placeholder in this prototype. No wallet permissions or transactions are requested.</p><button class="btn" id="connectWallet">Wallet connection coming soon</button><p class="muted" id="walletStatus">Not connected</p></div><div class="notice">GV Points are not GVX tokens. No token has been deployed, and there is no live token balance, sale, staking or withdrawal function yet.</div></section>
 <section class="page" id="profile"><div class="card profile-form"><h2>Your profile</h2><label class="muted" for="playerName">Display name</label><input class="field" id="playerName" maxlength="24" placeholder="Enter a gaming name"><button class="btn" id="saveProfile">Save profile</button><hr style="border:0;border-top:1px solid var(--line);margin:22px 0"><h3>Invite friends</h3><p class="muted">Referral tracking is a demo only. No referral rewards are issued yet.</p><div style="display:flex;gap:8px"><input class="field" id="refCode" value="GAMEVERSE-DEMO" readonly><button class="btn secondary" id="copyRef">Copy</button></div></div></section>
+<section class="page" id="admin">
+<div class="section-head"><h2>Super Admin · User management</h2><small>Restricted account</small></div>
+<div class="notice" style="margin:0 0 16px">Admin tools are protected by Firebase Authentication and Firestore rules. Only your configured admin UID can load users or change points.</div>
+<div class="card"><label class="muted" for="adminSearch">Search users by email or display name</label><input class="field" id="adminSearch" placeholder="Search users"><button class="btn secondary" id="adminReload" type="button">Refresh users</button><p class="muted" id="adminStatus">Open this panel to load registered users.</p><div id="adminUsers" class="mission-list"></div></div>
+</section>
 <footer class="muted" style="text-align:center;padding:35px 0 10px">GameVerse · Early prototype · GV Points are demo-only and have no monetary value.</footer>
 </main></div>
 
@@ -57,6 +62,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyB8oL6CdPfK8vyOgP5Vh0L6awk2UWntTNo",authDomain:"gameverse-3ec07.firebaseapp.com",projectId:"gameverse-3ec07",storageBucket:"gameverse-3ec07.firebasestorage.app",messagingSenderId:"892838111730",appId:"1:892838111730:web:749e34b7895e4337c7636b",measurementId:"G-L65MFBXZW8"};
+// Replace this placeholder with the same Firebase Authentication UID used in your Firestore rules.
+const MAIN_ADMIN_UID="Z4UNsn2mXNMq5mgJNpZfrJ0DpmD3";
 let auth=null,db=null,currentUser=null,authMode="register",firebaseReady=false,cloudPoints=null,cloudPointsLoaded=false;
 try{if(typeof firebase!=="undefined"){firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();firebaseReady=true}}catch(e){console.error("Firebase initialization error",e)}
 const defaults={points:125,completed:[],dailyDate:"",streak:0,referrals:0,name:"Player"};
@@ -77,8 +84,41 @@ const claimed=state.dailyDate===new Date().toDateString();document.getElementByI
 document.getElementById("missionList").innerHTML=missions.map(m=>`<div class="mission"><div><h4>${esc(m.name)}</h4><div class="muted">${esc(m.desc)}</div></div><div style="display:flex;align-items:center;gap:12px"><span class="reward">+${m.reward} pts</span><button class="btn ${state.completed.includes(m.id)?"secondary":""}" ${state.completed.includes(m.id)?"disabled":""} onclick="claimMission('${m.id}')">${state.completed.includes(m.id)?"Completed":"Claim"}</button></div></div>`).join("");
 const rows=[["1","NovaRider","2,450"],["2","PixelKnight","1,980"],["3","SkyHunter","1,720"],["4",state.name,state.points.toLocaleString()],["5","PuzzleFox","890"]];document.getElementById("leaderRows").innerHTML=rows.map(r=>`<div class="leader-row"><span>${r[0]}. &nbsp; ${esc(r[1])} ${r[1]===state.name?"(You)":""}</span><strong>${r[2]} pts</strong></div>`).join("")
 }
+function isMainAdmin(){return !!(currentUser&&MAIN_ADMIN_UID!=="PASTE_YOUR_UID_HERE"&&currentUser.uid===MAIN_ADMIN_UID)}
+function updateAdminVisibility(){const b=document.getElementById("adminNav");if(b)b.style.display=isMainAdmin()?"block":"none"}
+let adminUsersCache=[];
+async function loadAdminUsers(){
+ const status=document.getElementById("adminStatus"),list=document.getElementById("adminUsers");
+ if(!isMainAdmin()){status.textContent="Admin access is not available for this account.";list.innerHTML="";return}
+ status.textContent="Loading registered users…";list.innerHTML="";
+ try{
+  const snap=await db.collection("users").get();adminUsersCache=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
+  renderAdminUsers();status.textContent=`Loaded ${adminUsersCache.length} registered user(s).`;
+ }catch(e){console.error("Admin user load failed",e);status.textContent="Could not load users. Check the published Firestore rules and admin UID."}
+}
+function renderAdminUsers(){
+ const q=(document.getElementById("adminSearch").value||"").trim().toLowerCase();
+ const filtered=adminUsersCache.filter(u=>String(u.email||"").toLowerCase().includes(q)||String(u.displayName||"").toLowerCase().includes(q));
+ const list=document.getElementById("adminUsers");
+ if(!filtered.length){list.innerHTML='<p class="muted">No matching users found.</p>';return}
+ list.innerHTML=filtered.map(u=>`<div class="mission" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><strong>${esc(u.displayName||"Player")}</strong><div class="muted">${esc(u.email||"No email")}</div><div class="muted">UID: ${esc(u.id)}</div></div><strong class="reward">${Number(u.points)||0} GV points</strong></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input class="field" style="max-width:130px;margin:0" type="number" min="1" step="1" id="amt-${esc(u.id)}" placeholder="Points"><button class="btn" type="button" onclick="adminAdjustPoints('${esc(u.id)}',1)">Add</button><button class="btn secondary" type="button" onclick="adminAdjustPoints('${esc(u.id)}',-1)">Deduct</button></div></div>`).join("");
+}
+async function adminAdjustPoints(uid,direction){
+ if(!isMainAdmin()){toast("Admin access denied");return}
+ const input=document.getElementById("amt-"+uid),amount=Number(input&&input.value);
+ if(!Number.isSafeInteger(amount)||amount<=0){toast("Enter a whole number greater than zero");return}
+ const user=adminUsersCache.find(u=>u.id===uid);if(!user){toast("User not found. Refresh the list.");return}
+ const current=Number(user.points)||0,delta=amount*direction;
+ if(current+delta<0){toast("Points cannot go below zero");return}
+ if(!confirm(`${direction>0?"Add":"Deduct"} ${amount} points ${direction>0?"to":"from"} ${user.email||user.displayName||uid}?`))return;
+ try{
+  await db.collection("users").doc(uid).update({points:firebase.firestore.FieldValue.increment(delta),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  user.points=current+delta;renderAdminUsers();toast("Points updated successfully");
+  if(currentUser&&currentUser.uid===uid){cloudPoints=user.points;cloudPointsLoaded=true;render()}
+ }catch(e){console.error("Admin points update failed",e);toast("Update failed. Check Firestore rules and try again.")}
+}
 function claimMission(id){if(state.completed.includes(id))return;const m=missions.find(x=>x.id===id);if(!m)return;state.completed.push(id);if(!currentUser){state.points+=m.reward;if(id==="invite")state.referrals++}save();toast(currentUser?"Mission marked complete. Points require admin approval.":`Mission completed · +${m.reward} guest demo points`)}
-function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
+function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile",admin:"Super Admin Panel"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="admin")loadAdminUsers();if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
 document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)go(b.dataset.page)});document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 document.getElementById("dailyBtn").addEventListener("click",()=>{const d=new Date().toDateString();if(state.dailyDate===d)return;state.streak++;state.dailyDate=d;if(!currentUser)state.points+=25;save();toast(currentUser?"Check-in recorded on this device. Points require admin approval.":"Daily check-in claimed · +25 guest demo points")});
 document.getElementById("saveProfile").addEventListener("click",async()=>{const n=document.getElementById("playerName").value.trim().slice(0,24)||"Player";state.name=n;save();if(currentUser&&db){try{await db.collection("users").doc(currentUser.uid).update({displayName:n,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});toast("Profile saved to your account")}catch(e){console.error(e);toast("Saved on this device; cloud update failed")}}else toast("Profile saved on this device")});
@@ -104,9 +144,11 @@ closeAuth();document.getElementById("authForm").reset();
 }catch(error){console.error("GameVerse authentication error:",error);showAuthError(authMessage(error))}
 finally{submit.disabled=false;submit.textContent=authMode==="register"?"Create GameVerse account":"Login"}
 });
-if(firebaseReady&&auth){auth.onAuthStateChanged(async user=>{currentUser=user||null;cloudPoints=null;cloudPointsLoaded=false;document.getElementById("authStatus").textContent=user?(user.email||"Logged in"):"Guest mode";document.getElementById("authOpen").textContent=user?"Logout":"Login / Sign up";render();if(user){try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const d=snap.data()||{};cloudPoints=Number.isFinite(Number(d.points))?Number(d.points):0;cloudPointsLoaded=true;if(d.displayName)state.name=d.displayName;save()}else{cloudPoints=0;cloudPointsLoaded=true;render()}}catch(e){console.error("Cloud points/profile load failed:",e);toast("Could not load cloud points. Check Firestore rules.")}}})}
+document.getElementById("adminReload").addEventListener("click",loadAdminUsers);
+document.getElementById("adminSearch").addEventListener("input",renderAdminUsers);
+if(firebaseReady&&auth){auth.onAuthStateChanged(async user=>{currentUser=user||null;cloudPoints=null;cloudPointsLoaded=false;updateAdminVisibility();document.getElementById("authStatus").textContent=user?(user.email||"Logged in"):"Guest mode";document.getElementById("authOpen").textContent=user?"Logout":"Login / Sign up";render();if(user){try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const d=snap.data()||{};cloudPoints=Number.isFinite(Number(d.points))?Number(d.points):0;cloudPointsLoaded=true;if(d.displayName)state.name=d.displayName;save()}else{cloudPoints=0;cloudPointsLoaded=true;render()}}catch(e){console.error("Cloud points/profile load failed:",e);toast("Could not load cloud points. Check Firestore rules.")}}})}
 else{document.getElementById("authStatus").textContent="Firebase unavailable";console.error("Firebase SDK did not load or initialize")}
-render();
+updateAdminVisibility();render();
 </script>
 </body>
 </html>
