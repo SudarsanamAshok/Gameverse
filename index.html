@@ -131,7 +131,7 @@ async function adminAdjustPoints(uid,direction){
    const snap=await tx.get(userRef);if(!snap.exists)throw new Error("User profile not found");
    const data=snap.data()||{};previousBalance=Number(data.points)||0;const delta=amount*direction;newBalance=previousBalance+delta;
    if(!Number.isSafeInteger(newBalance)||newBalance<0)throw new Error("Points cannot go below zero or exceed the safe integer limit");
-   tx.update(userRef,{points:newBalance,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   tx.update(userRef,{points:newBalance,lastTransactionId:logRef.id,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    tx.set(logRef,{userUid:uid,userEmail:String(data.email||user.email||""),userDisplayName:String(data.displayName||user.displayName||"Player"),adminUid:currentUser.uid,type:direction>0?"ADD":"DEDUCT",amount,previousBalance,newBalance,reason,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   });
   user.points=newBalance;renderAdminUsers();await loadPointTransactions();toast("Points updated and transaction recorded");
