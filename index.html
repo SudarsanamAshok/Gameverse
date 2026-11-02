@@ -41,6 +41,8 @@
 <div class="section-head"><h2>Super Admin · User management</h2><small>Restricted account</small></div>
 <div class="notice" style="margin:0 0 16px">Admin tools are protected by Firebase Authentication and Firestore rules. Only your configured admin UID can load users or change points.</div>
 <div class="card"><label class="muted" for="adminSearch">Search users by email or display name</label><input class="field" id="adminSearch" placeholder="Search users"><button class="btn secondary" id="adminReload" type="button">Refresh users</button><p class="muted" id="adminStatus">Open this panel to load registered users.</p><div id="adminUsers" class="mission-list"></div></div>
+<div class="section-head"><h2>Points transaction history</h2><small>Latest 30 changes</small></div>
+<div class="card"><p class="muted" id="transactionStatus">Admin-only audit history.</p><div id="transactionRows" class="mission-list"></div></div>
 </section>
 <footer class="muted" style="text-align:center;padding:35px 0 10px">GameVerse · Early prototype · GV Points are demo-only and have no monetary value.</footer>
 </main></div>
@@ -101,24 +103,43 @@ function renderAdminUsers(){
  const filtered=adminUsersCache.filter(u=>String(u.email||"").toLowerCase().includes(q)||String(u.displayName||"").toLowerCase().includes(q));
  const list=document.getElementById("adminUsers");
  if(!filtered.length){list.innerHTML='<p class="muted">No matching users found.</p>';return}
- list.innerHTML=filtered.map(u=>`<div class="mission" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><strong>${esc(u.displayName||"Player")}</strong><div class="muted">${esc(u.email||"No email")}</div><div class="muted">UID: ${esc(u.id)}</div></div><strong class="reward">${Number(u.points)||0} GV points</strong></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input class="field" style="max-width:130px;margin:0" type="number" min="1" step="1" id="amt-${esc(u.id)}" placeholder="Points"><button class="btn" type="button" onclick="adminAdjustPoints('${esc(u.id)}',1)">Add</button><button class="btn secondary" type="button" onclick="adminAdjustPoints('${esc(u.id)}',-1)">Deduct</button></div></div>`).join("");
+ list.innerHTML=filtered.map(u=>`<div class="mission" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><strong>${esc(u.displayName||"Player")}</strong><div class="muted">${esc(u.email||"No email")}</div><div class="muted">UID: ${esc(u.id)}</div></div><strong class="reward">${Number(u.points)||0} GV points</strong></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input class="field" style="max-width:110px;margin:0" type="number" min="1" step="1" id="amt-${esc(u.id)}" placeholder="Points"><input class="field" style="flex:1;min-width:130px;margin:0" maxlength="120" id="reason-${esc(u.id)}" placeholder="Reason (required)"><button class="btn" type="button" onclick="adminAdjustPoints('${esc(u.id)}',1)">Add</button><button class="btn secondary" type="button" onclick="adminAdjustPoints('${esc(u.id)}',-1)">Deduct</button></div></div>`).join("");
+}
+async function loadPointTransactions(){
+ const status=document.getElementById("transactionStatus"),list=document.getElementById("transactionRows");
+ if(!isMainAdmin()){status.textContent="Admin access required.";list.innerHTML="";return}
+ status.textContent="Loading transaction history…";list.innerHTML="";
+ try{
+  const snap=await db.collection("pointTransactions").orderBy("createdAt","desc").limit(30).get();
+  if(snap.empty){status.textContent="No point transactions recorded yet.";return}
+  const rows=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
+  list.innerHTML=rows.map(t=>`<div class="mission" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>${esc(t.type||"CHANGE")} · ${Number(t.amount)||0} points</strong><strong class="reward">${Number(t.newBalance)||0} balance</strong></div><div class="muted">User: ${esc(t.userEmail||t.userUid||"Unknown")}</div><div class="muted">Reason: ${esc(t.reason||"Not supplied")}</div><div class="muted">Previous: ${Number(t.previousBalance)||0} · New: ${Number(t.newBalance)||0}</div><div class="muted">Admin UID: ${esc(t.adminUid||"")}</div><div class="muted">${t.createdAt&&t.createdAt.toDate?t.createdAt.toDate().toLocaleString():"Time pending"}</div></div>`).join("");
+  status.textContent=`Showing ${rows.length} latest transaction(s).`;
+ }catch(e){console.error("Transaction history load failed",e);status.textContent="Could not load history. Check that the updated Firestore rules are published."}
 }
 async function adminAdjustPoints(uid,direction){
  if(!isMainAdmin()){toast("Admin access denied");return}
- const input=document.getElementById("amt-"+uid),amount=Number(input&&input.value);
+ const input=document.getElementById("amt-"+uid),reasonInput=document.getElementById("reason-"+uid),amount=Number(input&&input.value),reason=(reasonInput&&reasonInput.value||"").trim();
  if(!Number.isSafeInteger(amount)||amount<=0){toast("Enter a whole number greater than zero");return}
+ if(!reason){toast("Enter a reason for this point change");return}
  const user=adminUsersCache.find(u=>u.id===uid);if(!user){toast("User not found. Refresh the list.");return}
- const current=Number(user.points)||0,delta=amount*direction;
- if(current+delta<0){toast("Points cannot go below zero");return}
- if(!confirm(`${direction>0?"Add":"Deduct"} ${amount} points ${direction>0?"to":"from"} ${user.email||user.displayName||uid}?`))return;
+ if(!confirm(`${direction>0?"Add":"Deduct"} ${amount} points ${direction>0?"to":"from"} ${user.email||user.displayName||uid}?\nReason: ${reason}`))return;
  try{
-  await db.collection("users").doc(uid).update({points:firebase.firestore.FieldValue.increment(delta),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-  user.points=current+delta;renderAdminUsers();toast("Points updated successfully");
-  if(currentUser&&currentUser.uid===uid){cloudPoints=user.points;cloudPointsLoaded=true;render()}
- }catch(e){console.error("Admin points update failed",e);toast("Update failed. Check Firestore rules and try again.")}
+  const userRef=db.collection("users").doc(uid),logRef=db.collection("pointTransactions").doc();
+  let previousBalance=0,newBalance=0;
+  await db.runTransaction(async tx=>{
+   const snap=await tx.get(userRef);if(!snap.exists)throw new Error("User profile not found");
+   const data=snap.data()||{};previousBalance=Number(data.points)||0;const delta=amount*direction;newBalance=previousBalance+delta;
+   if(!Number.isSafeInteger(newBalance)||newBalance<0)throw new Error("Points cannot go below zero or exceed the safe integer limit");
+   tx.update(userRef,{points:newBalance,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   tx.set(logRef,{userUid:uid,userEmail:String(data.email||user.email||""),userDisplayName:String(data.displayName||user.displayName||"Player"),adminUid:currentUser.uid,type:direction>0?"ADD":"DEDUCT",amount,previousBalance,newBalance,reason,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  });
+  user.points=newBalance;renderAdminUsers();await loadPointTransactions();toast("Points updated and transaction recorded");
+  if(currentUser&&currentUser.uid===uid){cloudPoints=newBalance;cloudPointsLoaded=true;render()}
+ }catch(e){console.error("Admin points transaction failed",e);toast(e.message||"Update failed. Check Firestore rules and try again.")}
 }
 function claimMission(id){if(state.completed.includes(id))return;const m=missions.find(x=>x.id===id);if(!m)return;state.completed.push(id);if(!currentUser){state.points+=m.reward;if(id==="invite")state.referrals++}save();toast(currentUser?"Mission marked complete. Points require admin approval.":`Mission completed · +${m.reward} guest demo points`)}
-function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile",admin:"Super Admin Panel"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="admin")loadAdminUsers();if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
+function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",missions:"Missions & rewards",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile",admin:"Super Admin Panel"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="admin"){loadAdminUsers();loadPointTransactions();}if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
 document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)go(b.dataset.page)});document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 document.getElementById("dailyBtn").addEventListener("click",()=>{const d=new Date().toDateString();if(state.dailyDate===d)return;state.streak++;state.dailyDate=d;if(!currentUser)state.points+=25;save();toast(currentUser?"Check-in recorded on this device. Points require admin approval.":"Daily check-in claimed · +25 guest demo points")});
 document.getElementById("saveProfile").addEventListener("click",async()=>{const n=document.getElementById("playerName").value.trim().slice(0,24)||"Player";state.name=n;save();if(currentUser&&db){try{await db.collection("users").doc(currentUser.uid).update({displayName:n,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});toast("Profile saved to your account")}catch(e){console.error(e);toast("Saved on this device; cloud update failed")}}else toast("Profile saved on this device")});
