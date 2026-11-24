@@ -215,23 +215,49 @@ async function loadLeaderboard(){const status=document.getElementById("leaderSta
 function dateKeyNow(){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v={};for(const p of parts)v[p.type]=p.value;return `${v.year}-${v.month}-${v.day}`}
 function dailyMissionId(uid,key,missionId){return `${uid}_${key}_${missionId}`}
 async function claimDailyMission(missionId){
- if(!currentUser){toast("Please log in to claim daily mission points");openAuth("login");return}
+ if(!currentUser){toast("Please log in to claim GV Points");openAuth("login");return}
+ if(!db||!firebaseReady){toast("GameVerse points service is unavailable. Please try again later.");return}
  const m=missions.find(x=>x.id===missionId);if(!m)return;
- const key=dateKeyNow(),claimId=dailyMissionId(currentUser.uid,key,missionId),claimRef=db.collection("dailyClaims").doc(claimId),userRef=db.collection("users").doc(currentUser.uid),leaderRef=db.collection("leaderboard").doc(currentUser.uid),logRef=db.collection("pointTransactions").doc();
+ const claimButton=document.querySelector(`button[onclick="claimMission('${missionId}')"]`);
+ if(claimButton){claimButton.disabled=true;claimButton.textContent="Claiming…"}
+ const key=dateKeyNow(),claimId=dailyMissionId(currentUser.uid,key,missionId),
+ claimRef=db.collection("dailyClaims").doc(claimId),
+ userRef=db.collection("users").doc(currentUser.uid),
+ leaderRef=db.collection("leaderboard").doc(currentUser.uid),
+ logRef=db.collection("pointTransactions").doc();
  try{
   let updatedBalance=0;
   await db.runTransaction(async tx=>{
-   const claimSnap=await tx.get(claimRef);if(claimSnap.exists)throw new Error("You already claimed this mission today. It resets at 12:00 AM IST.");
-   const userSnap=await tx.get(userRef);if(!userSnap.exists)throw new Error("Your GameVerse profile was not found.");
-   const u=userSnap.data()||{},previousBalance=Number(u.points)||0,amount=m.reward;updatedBalance=previousBalance+amount;
-   if(!Number.isSafeInteger(updatedBalance))throw new Error("Point balance limit reached.");
+   const claimSnap=await tx.get(claimRef);
+   if(claimSnap.exists)throw new Error("You already claimed this mission today. It resets at 12:00 AM IST.");
+   const userSnap=await tx.get(userRef);
+   if(!userSnap.exists)throw new Error("Your GameVerse profile was not found. Log out and log in again.");
+   const u=userSnap.data()||{},previousBalance=Number(u.points)||0,amount=m.reward;
+   updatedBalance=previousBalance+amount;
+   if(!Number.isSafeInteger(updatedBalance))throw new Error("GV Points balance limit reached.");
+   // Mission rewards are internal GV Points only. No GVX token or wallet is checked or charged.
    tx.update(userRef,{points:updatedBalance,lastTransactionId:logRef.id,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    tx.set(leaderRef,{uid:currentUser.uid,displayName:String(u.displayName||"Player"),points:updatedBalance,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
    tx.set(logRef,{userUid:currentUser.uid,userEmail:String(u.email||currentUser.email||""),userDisplayName:String(u.displayName||"Player"),adminUid:currentUser.uid,type:"ADD",amount,previousBalance,newBalance:updatedBalance,reason:`Daily mission: ${m.name}`,missionId:m.id,dateKey:key,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
    tx.set(claimRef,{userUid:currentUser.uid,dateKey:key,missionId:m.id,points:amount,status:"CLAIMED",transactionId:logRef.id,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   });
-  cloudPoints=updatedBalance;cloudPointsLoaded=true;state.completed=missions.map(x=>x.id);save();await loadDailyClaimStatus();await loadLeaderboard();toast(`+${m.reward} GV Points credited instantly!`);
- }catch(e){console.error("Daily mission claim failed",e);toast(e.message||"Claim failed. Check Firestore rules.");await loadDailyClaimStatus()}
+  cloudPoints=updatedBalance;cloudPointsLoaded=true;
+  state.completed=[...new Set([...(Array.isArray(state.completed)?state.completed:[]),missionId])];
+  save();await loadDailyClaimStatus();await loadDailyMissionStates();await loadLeaderboard();
+  toast(`+${m.reward} GV Points credited! No GVX tokens used.`);
+ }catch(e){
+  console.error("Daily mission claim failed",e);
+  const code=String(e&&e.code||"").toLowerCase();
+  const message=String(e&&e.message||"");
+  if(code.includes("permission-denied")||/missing or insufficient permissions/i.test(message)){
+   toast("Firebase blocked the claim (permission denied). No GVX is needed; Firestore rules must allow this signed-in user's mission writes.");
+  }else{
+   toast(message||"Claim failed. Please try again.");
+  }
+  await loadDailyClaimStatus();await loadDailyMissionStates();
+ }finally{
+  if(claimButton&&claimButton.textContent==="Claiming…"){claimButton.disabled=false;claimButton.textContent="Claim"}
+ }
 }
 async function requestDailyReward(){return claimDailyMission("daily")}
 async function loadDailyClaimStatus(){
