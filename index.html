@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#080d1b">
-<meta name="description" content="GameVerse is a gaming community on Base. Explore games, missions, tournaments and the GVX token ecosystem.">
+<meta name="description" content="GameVerse is a gaming community on Base. Explore games, community features and the GVX token ecosystem.">
 <meta property="og:title" content="GameVerse — Enter the Next Level">
 <meta property="og:description" content="Play. Compete. Connect. Explore the GameVerse gaming ecosystem.">
 <meta property="og:type" content="website">
@@ -57,7 +57,7 @@ body{background:radial-gradient(ellipse at 78% 0%,#27316b55 0,transparent 34%),r
 </div>
 <div class="premium-strip">
  <div class="strip-item"><div class="strip-icon">🎮</div><div><strong>Discover games</strong><small>Explore the GameVerse catalogue</small></div></div>
- <div class="strip-item"><div class="strip-icon">⚡</div><div><strong>Complete missions</strong><small>Take on challenges and track progress</small></div></div>
+ <div class="strip-item"><div class="strip-icon">⚡</div><div><strong>Join the community</strong><small>Discover what GameVerse is building</small></div></div>
  <div class="strip-item"><div class="strip-icon">🏆</div><div><strong>Build your profile</strong><small>Climb the community leaderboard</small></div></div>
 </div>
 <div class="token-feature">
@@ -131,10 +131,18 @@ function setMode(mode){authMode=mode;clearAuthError();const reg=mode==="register
 function openAuth(mode="login"){const wrap=document.getElementById("authWrap");if(!wrap){alert("GameVerse login window is missing. Please refresh the page.");return}setMode(mode);wrap.classList.add("show");if(!firebaseReady||!auth){showAuthError("Firebase Authentication did not initialize. Check Email/Password sign-in in Firebase Console and authorize this website domain.")}}
 function closeAuth(){document.getElementById("authWrap").classList.remove("show")}
 function render(){
-document.getElementById("points").textContent=currentUser&&cloudPointsLoaded?Number(cloudPoints)||0:(Number(state.points)||0);document.getElementById("pointsSource").textContent=currentUser?(cloudPointsLoaded?"Firestore account balance":"Loading cloud balance…"):"Guest demo balance";document.getElementById("dailyHelp").textContent=currentUser?"Cloud points are read-only here. Daily rewards are credited instantly after a secure claim.":"Guest demo check-in only; points stay on this device.";document.getElementById("completed").textContent=state.completed.length;document.getElementById("referrals").textContent=Number(state.referrals)||0;document.getElementById("playerName").value=state.name||"Player";
-const claimed=state.dailyDate===new Date().toDateString();document.getElementById("dailyProgress").style.width=claimed?"100%":"60%";document.getElementById("dailyBtn").disabled=claimed;document.getElementById("dailyBtn").textContent=claimed?"Claimed today":"Claim +25";document.getElementById("streakText").textContent=`${Math.max(1,state.streak)} day${state.streak===1?"":"s"} · Demo streak`;
-document.getElementById("missionList").innerHTML=missions.map(m=>`<div class="mission"><div><h4>${esc(m.name)}</h4><div class="muted">${esc(m.desc)}</div></div><div style="display:flex;align-items:center;gap:12px"><span class="reward">+${m.reward} pts</span><button class="btn " onclick="claimMission('${m.id}')">"Claim"</button></div></div>`).join("");
-
+  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  const setValue=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value};
+  const pointsEl=document.getElementById("points");
+  if(pointsEl)pointsEl.textContent=currentUser&&cloudPointsLoaded?(Number(cloudPoints)||0):(Number(state.points)||0);
+  setText("pointsSource",currentUser?(cloudPointsLoaded?"Firestore account balance":"Loading cloud balance…"):"Guest demo balance");
+  setText("dailyHelp",currentUser?"Your account is signed in.":"Guest mode is active.");
+  setText("referrals",Number(state.referrals)||0);
+  setValue("playerName",state.name||"Player");
+  const claimed=state.dailyDate===new Date().toDateString();
+  const progress=document.getElementById("dailyProgress");if(progress)progress.style.width=claimed?"100%":"60%";
+  const dailyBtn=document.getElementById("dailyBtn");if(dailyBtn){dailyBtn.disabled=claimed;dailyBtn.textContent=claimed?"Claimed today":"Claim +25";}
+  setText("streakText",`${Math.max(1,state.streak)} day${state.streak===1?"":"s"} · Demo streak`);
 }
 function isMainAdmin(){return !!(currentUser&&MAIN_ADMIN_UID!=="PASTE_YOUR_UID_HERE"&&currentUser.uid===MAIN_ADMIN_UID)}
 function updateAdminVisibility(){const b=document.getElementById("adminNav");if(b)b.style.display=isMainAdmin()?"block":"none"}
@@ -269,7 +277,10 @@ document.getElementById("reloadDailyClaims")?.addEventListener("click",loadAdmin
 document.getElementById("syncLeaderboard")?.addEventListener("click",syncLeaderboard);
 document.getElementById("saveProfile")?.addEventListener("click",async()=>{const n=document.getElementById("playerName").value.trim().slice(0,24)||"Player";state.name=n;save();if(currentUser&&db){try{await db.runTransaction(async tx=>{const ur=db.collection("users").doc(currentUser.uid),lr=db.collection("leaderboard").doc(currentUser.uid);tx.update(ur,{displayName:n,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});tx.set(lr,{uid:currentUser.uid,displayName:n,points:Number(cloudPoints)||0,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})});toast("Profile saved to your account");loadLeaderboard()}catch(e){console.error(e);toast("Saved on this device; cloud update failed")}}else toast("Profile saved on this device")});
 document.getElementById("copyRef")?.addEventListener("click",async()=>{const code=document.getElementById("refCode").value;try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(code);else{const x=document.createElement("textarea");x.value=code;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove()}toast("Referral code copied!")}catch(e){toast("Unable to copy referral code")}});
-document.getElementById("authOpen")?.addEventListener("click",()=>openAuth("login"));
+document.getElementById("authOpen")?.addEventListener("click",async()=>{
+  if(auth&&auth.currentUser){try{await auth.signOut();toast("You have been logged out.");}catch(e){console.error(e);toast("Could not log out. Please try again.");}}
+  else openAuth("login");
+});
 document.getElementById("showRegister")?.addEventListener("click",()=>setMode("register"));document.getElementById("showLogin")?.addEventListener("click",()=>setMode("login"));document.getElementById("authClose")?.addEventListener("click",closeAuth);document.getElementById("authWrap")?.addEventListener("click",e=>{if(e.target.id==="authWrap")closeAuth()});
 document.getElementById("connectTop")?.addEventListener("click",()=>go("wallet"));document.getElementById("connectWallet")?.addEventListener("click",()=>toast("Wallet connection will be added in a later version"));
 document.getElementById("authForm")?.addEventListener("submit",async e=>{
@@ -288,12 +299,20 @@ if(!snap.exists){const fallback=result.user.displayName||"Player";await ref.set(
 else{const data=snap.data()||{};state.name=data.displayName||result.user.displayName||"Player"}save();toast("Login successful. Welcome to GameVerse!")
 }
 closeAuth();document.getElementById("authForm").reset();
-}catch(error){console.error("GameVerse authentication error:",error);showAuthError(authMessage(error))}
+}catch(error){
+ console.error("GameVerse authentication/profile error:",error);
+ if(auth&&auth.currentUser){
+   closeAuth();document.getElementById("authForm").reset();
+   toast("Authentication succeeded, but the GameVerse profile could not sync. Check Firestore rules.");
+ }else{
+   showAuthError(authMessage(error));
+ }
+}
 finally{submit.disabled=false;submit.textContent=authMode==="register"?"Create GameVerse account":"Login"}
 });
 document.getElementById("adminReload")?.addEventListener("click",loadAdminUsers);
 document.getElementById("adminSearch")?.addEventListener("input",renderAdminUsers);
-if(firebaseReady&&auth){auth.onAuthStateChanged(async user=>{currentUser=user||null;cloudPoints=null;cloudPointsLoaded=false;updateAdminVisibility();document.getElementById("authStatus").textContent=user?(user.email||"Logged in"):"Guest mode";document.getElementById("authOpen").textContent=user?"Logout":"Login / Sign up";render();renderRewardCatalog();loadMyRedemptions();if(user){try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const d=snap.data()||{};cloudPoints=Number.isFinite(Number(d.points))?Number(d.points):0;cloudPointsLoaded=true;if(d.displayName)state.name=d.displayName;save();loadDailyClaimStatus();loadDailyMissionStates();loadLeaderboard()}else{cloudPoints=0;cloudPointsLoaded=true;render()}}catch(e){console.error("Cloud points/profile load failed:",e);toast("Could not load cloud points. Check Firestore rules.")}}})}
+if(firebaseReady&&auth){auth.onAuthStateChanged(async user=>{currentUser=user||null;cloudPoints=null;cloudPointsLoaded=false;updateAdminVisibility();document.getElementById("authStatus").textContent=user?(user.email||"Logged in"):"Guest mode";document.getElementById("authOpen").textContent=user?"Logout":"Login / Sign up";render();if(user){try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const d=snap.data()||{};cloudPoints=Number.isFinite(Number(d.points))?Number(d.points):0;cloudPointsLoaded=true;if(d.displayName)state.name=d.displayName;save();loadLeaderboard()}else{cloudPoints=0;cloudPointsLoaded=true;render()}}catch(e){console.error("Cloud points/profile load failed:",e);toast("Could not load cloud points. Check Firestore rules.")}}})}
 else{document.getElementById("authStatus").textContent="Firebase unavailable";console.error("Firebase SDK did not load or initialize")}
 updateAdminVisibility();render();
 </script>
