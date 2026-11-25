@@ -81,6 +81,42 @@ body.arcade-immersive{overflow:hidden!important}
 .puzzle-tile.matched{animation:fruitBurst .28s ease}
 @keyframes fruitBurst{50%{transform:scale(1.22) rotate(8deg);filter:brightness(1.7)}100%{transform:scale(.2);opacity:.2}}
 
+
+/* GAMEVERSE MOBILE-ONLY LAYOUT */
+@media(min-width:768px){
+ body:before{content:"GAMEVERSE MOBILE EDITION\A Please open this website on your smartphone for the full gaming experience.";white-space:pre;position:fixed;inset:0;z-index:99999;display:grid;place-content:center;text-align:center;padding:30px;background:#070914;color:#f4f6ff;font-size:22px;font-weight:850;line-height:1.8}
+ .shell{visibility:hidden}
+}
+@media(max-width:767px){
+ .shell{display:block;min-height:100dvh}
+ .sidebar{position:sticky;top:0;z-index:20;padding:10px 12px;background:#080b18f5;backdrop-filter:blur(14px)}
+ .brand{font-size:18px;margin-bottom:8px}
+ .main{padding:18px 12px 34px}
+ .arcade-stage.active{position:fixed;inset:0;z-index:1000;margin:0;border:0;border-radius:0;overflow:auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+ .arcade-toolbar{position:sticky;top:0;z-index:4;background:#090e1df2;backdrop-filter:blur(12px);padding:10px}
+ .arcade-screen{flex:1;display:flex;align-items:center;min-height:0}
+ .arcade-screen canvas{width:100%;height:auto;max-height:64dvh;object-fit:contain}
+ .arcade-controls{position:sticky;bottom:0;z-index:4;padding:12px 8px calc(12px + env(safe-area-inset-bottom));background:#0b1224f5}
+ .arcade-controls button{min-width:54px;min-height:50px;font-size:18px;touch-action:none}
+ .arcade-controls small{width:100%;text-align:center}
+ .puzzle-board{width:min(100%,430px);gap:5px;padding:9px;margin:12px auto}
+ .puzzle-tile{border-radius:9px;touch-action:none}
+ .game-result{padding:18px}
+ .game-result-card{padding:26px 18px}
+}
+.game-result{display:none;position:fixed;inset:0;z-index:2000;background:radial-gradient(ellipse at 50% 0%,#26336d 0,transparent 55%),#050814f5;backdrop-filter:blur(18px);align-items:center;justify-content:center;padding:22px;overflow:auto}
+.game-result.show{display:flex}
+.game-result-card{width:min(100%,440px);border:1px solid #56618c88;border-radius:25px;padding:34px 26px;text-align:center;background:linear-gradient(145deg,#17213b,#0b1020);box-shadow:0 30px 100px #0009}
+.result-icon{font-size:58px;margin-bottom:10px;filter:drop-shadow(0 0 22px #64f5e877)}
+.game-result-card h2{font-size:34px;letter-spacing:-1px;margin:7px 0}
+.game-result-card p{color:#bdc8e1;font-size:14px;line-height:1.6}
+.result-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:24px 0}
+.result-score-grid>div{padding:16px 8px;border:1px solid #35405f;border-radius:15px;background:#0b1428}
+.result-score-grid small{display:block;color:#a8b7d5;font-size:10px;letter-spacing:1.3px}
+.result-score-grid strong{display:block;font-size:27px;color:#70f4e8;margin-top:5px}
+.result-actions{display:grid;gap:10px}
+.result-actions button{width:100%;padding:14px}
+
 </style>
 
 <style id="gameverse-arcade-upgrade">
@@ -119,7 +155,7 @@ body.arcade-immersive{overflow:hidden!important}
 </div>
 <div class="subsection-title"><div><h2>Choose your next quest</h2><p>Explore the worlds inside GameVerse</p></div><button class="btn secondary" data-go="games">View all games ↗</button></div>
 <div class="premium-game-grid">
- <article class="premium-game"><span class="game-tag">ARCADE</span><div class="game-symbol">🏎️</div><h3>Neon Racers</h3><p>Speed through neon-lit tracks and chase your best run.</p></article>
+ 
  <article class="premium-game"><span class="game-tag">BATTLE</span><div class="game-symbol">⚔️</div><h3>Battle Arena</h3><p>Prepare for competitive challenges and community events.</p></article>
  <article class="premium-game"><span class="game-tag">PUZZLE</span><div class="game-symbol">🧩</div><h3>Puzzle Quest</h3><p>Test your strategy with daily puzzle activities.</p></article>
 </div>
@@ -128,25 +164,40 @@ body.arcade-immersive{overflow:hidden!important}
 <div class="card daily"><div><div class="eyebrow">Daily check-in</div><h3>Keep your streak alive</h3><p class="muted" id="dailyHelp">Sign in and claim daily missions to receive points instantly.</p><p class="muted" id="dailyClaimStatus">Daily check-in: +25 points · instant credit</p></div><div><div class="progress"><span id="dailyProgress"></span></div><div style="display:flex;justify-content:space-between;align-items:center"><small class="muted" id="streakText">Day 1 · Demo streak</small><button class="btn" id="dailyBtn">Claim +25</button></div></div></div></div>
 <div class="grid stats"><div class="card"><div class="stat-label">Your GV Points</div><div class="stat-value" id="points">125</div><div class="stat-sub" id="pointsSource">Guest demo balance</div></div><div class="card"><div class="stat-label">Referral invites</div><div class="stat-value" id="referrals">0</div><div class="stat-sub">Demo counter</div></div><div class="card"><div class="stat-label">Current rank</div><div class="stat-value">Rookie</div><div class="stat-sub">Your journey begins</div></div></div>
 <div class="section-head"><h2>Featured games</h2><small>Demo catalogue</small></div><div class="grid games">
-<article class="card game"><div class="game-art">🏎️</div><div class="game-body"><h3>Neon Racers</h3><div class="muted">Racing · Community missions</div></div></article><article class="card game"><div class="game-art">⚔️</div><div class="game-body"><h3>Battle Arena</h3><div class="muted">Action · Skill challenges</div></div></article><article class="card game"><div class="game-art">🧩</div><div class="game-body"><h3>Puzzle Quest</h3><div class="muted">Puzzle · Daily tasks</div></div></article></div>
+<article class="card game"><div class="game-art">⚔️</div><div class="game-body"><h3>Battle Arena</h3><div class="muted">Action · Skill challenges</div></div></article><article class="card game"><div class="game-art">🧩</div><div class="game-body"><h3>Puzzle Quest</h3><div class="muted">Puzzle · Daily tasks</div></div></article></div>
 <div class="notice">This is an early website prototype. Game names and missions are illustrative. GameVerse is not affiliated with PUBG, BGMI, Free Fire or any other game publisher.</div>
 </section>
 <section class="page" id="games">
-<div class="arcade-intro"><div class="eyebrow">GAMEVERSE ARCADE · SEASON ZERO</div><h2>CHOOSE YOUR <span style="color:#66f3e7">WORLD.</span></h2><p>Three playable worlds, built directly into GameVerse. Race through a neon megacity, survive the arena, or match juicy fruit combos. Your best scores are saved on this device.</p></div>
-<div class="section-head"><h2>Featured experiences</h2><small>Playable prototypes · Mobile + desktop</small></div>
+<div class="arcade-intro"><div class="eyebrow">GAMEVERSE ARCADE · MOBILE EDITION</div><h2>CHOOSE YOUR <span style="color:#66f3e7">WORLD.</span></h2><p>Two mobile-first games. Survive the arena or swipe juicy fruit combos. Your best scores are saved on this device.</p></div>
+<div class="section-head"><h2>Featured experiences</h2><small>Made for mobile</small></div>
 <div class="arcade-cards">
- <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">01 · RACING</span>🏎️</div><div class="arcade-card-body"><h3>Neon Racers</h3><p>High-speed night drive. Dodge traffic, collect energy orbs and beat your distance record.</p><button class="btn" type="button" onclick="launchArcade('racer')">PLAY NOW ↗</button></div></article>
- <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">02 · SURVIVAL</span>⚔️</div><div class="arcade-card-body"><h3>Battle Arena</h3><p>Enter the combat zone. Move, aim and fire at incoming drones. Survive for the highest score.</p><button class="btn" type="button" onclick="launchArcade('arena')">PLAY NOW ↗</button></div></article>
- <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">03 · PUZZLE</span>🍓</div><div class="arcade-card-body"><h3>Puzzle Quest</h3><p>Swipe fruit in any direction to match 3 or more. Create combos and beat your best score.</p><button class="btn" type="button" onclick="launchArcade('puzzle')">PLAY NOW ↗</button></div></article>
+ <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">01 · SURVIVAL</span>⚔️</div><div class="arcade-card-body"><h3>Battle Arena</h3><p>Enter the combat zone. Move, aim and fire at incoming drones. Survive for the highest score.</p><button class="btn" type="button" onclick="launchArcade('arena')">PLAY NOW ↗</button></div></article>
+ <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">02 · PUZZLE</span>🍓</div><div class="arcade-card-body"><h3>Puzzle Quest</h3><p>Swipe fruit in any direction to match 3 or more. Create combos and beat your best score.</p><button class="btn" type="button" onclick="launchArcade('puzzle')">PLAY NOW ↗</button></div></article>
 </div>
 <div class="arcade-stage" id="arcadeStage">
- <div class="arcade-toolbar"><div><div class="eyebrow">NOW PLAYING</div><h3 id="arcadeTitle">Neon Racers</h3></div><div class="arcade-stats"><span class="arcade-stat">SCORE <b id="arcadeScore">0</b></span><span class="arcade-stat">BEST <b id="arcadeBest">0</b></span><span class="arcade-stat" id="arcadeExtra">LEVEL <b id="arcadeLevel">1</b></span></div><button class="btn secondary" type="button" onclick="exitArcade()">EXIT ✕</button></div>
+ <div class="arcade-toolbar"><div><div class="eyebrow">NOW PLAYING</div><h3 id="arcadeTitle">GameVerse Arcade</h3></div><div class="arcade-stats"><span class="arcade-stat">SCORE <b id="arcadeScore">0</b></span><span class="arcade-stat">BEST <b id="arcadeBest">0</b></span><span class="arcade-stat" id="arcadeExtra">LEVEL <b id="arcadeLevel">1</b></span></div><button class="btn secondary" type="button" onclick="exitArcade()">EXIT ✕</button></div>
  <div class="arcade-screen" id="arcadeScreen">
   <canvas id="arcadeCanvas" width="900" height="520" aria-label="Game canvas"></canvas>
   <div class="arcade-overlay" id="arcadeOverlay"><div class="arcade-overlay-panel"><div style="font-size:45px" id="arcadeOverlayIcon">🏁</div><h3 id="arcadeOverlayTitle">Ready to race?</h3><p id="arcadeOverlayText">Press start to enter the neon city.</p><button class="btn" id="arcadeStart" type="button">START GAME</button></div></div>
  </div>
  <div id="puzzleMount" style="display:none"><div class="puzzle-board" id="puzzleBoard"></div><div class="puzzle-help" id="puzzleHelp">Swipe a fruit tile toward a neighbour to swap. Match 3 or more fruits!</div></div>
  <div class="arcade-controls" id="arcadeControls"><button class="btn secondary" type="button" id="arcadeLeft">◀</button><button class="btn secondary" type="button" id="arcadeAction">●</button><button class="btn secondary" type="button" id="arcadeRight">▶</button><button class="btn secondary" type="button" id="arcadeNitro" style="display:none">⚡ NITRO</button><small id="arcadeControlHint">Use ← → or A / D to steer · Space to pause</small></div>
+</div>
+<div class="game-result" id="gameResult" aria-live="polite">
+ <div class="game-result-card">
+  <div class="result-icon" id="resultIcon">🏆</div>
+  <div class="eyebrow">GAME SESSION FINISHED</div>
+  <h2 id="resultTitle">GAME OVER</h2>
+  <p id="resultMessage">Your run has ended.</p>
+  <div class="result-score-grid">
+   <div><small>YOUR SCORE</small><strong id="resultScore">0</strong></div>
+   <div><small>BEST SCORE</small><strong id="resultBest">0</strong></div>
+  </div>
+  <div class="result-actions">
+   <button class="btn" type="button" id="resultReplay">PLAY AGAIN</button>
+   <button class="btn secondary" type="button" id="resultBack">BACK TO GAMES</button>
+  </div>
+ </div>
 </div>
 <p class="arcade-footnote">Game scores are local demo scores only. They do not generate GVX tokens, cash rewards or blockchain transactions. Connect-to-wallet and competitive multiplayer features can be added separately after the games are tested.</p>
 </section>
@@ -358,8 +409,8 @@ const arcadeBestKey=m=>'gv_arcade_best_'+m;
 function arcadeBest(m){return Number(localStorage.getItem(arcadeBestKey(m))||0)}
 function setArcadeScore(n){arcade.score=Math.max(0,Math.floor(n));const el=document.getElementById('arcadeScore');if(el)el.textContent=arcade.score.toLocaleString();if(arcade.mode){arcade.best=Math.max(arcade.best,arcade.score);if(arcade.best>arcadeBest(arcade.mode))localStorage.setItem(arcadeBestKey(arcade.mode),String(arcade.best));const b=document.getElementById('arcadeBest');if(b)b.textContent=arcadeBest(arcade.mode).toLocaleString()}}
 function arcadeOverlay(title,desc,icon='🎮',button='PLAY AGAIN'){const o=document.getElementById('arcadeOverlay');if(!o)return;o.classList.remove('hidden');document.getElementById('arcadeOverlayTitle').textContent=title;document.getElementById('arcadeOverlayText').textContent=desc;document.getElementById('arcadeOverlayIcon').textContent=icon;document.getElementById('arcadeStart').textContent=button}
-function launchArcade(mode){audioReady();exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.boost=100;arcade.boosting=false;arcade.roadTime=0;arcade.shake=0;arcade.running=false;
- const stage=document.getElementById('arcadeStage');stage.classList.add('active');document.body.classList.add('arcade-immersive');document.getElementById('arcadeTitle').textContent=mode==='racer'?'Neon Racers':mode==='arena'?'Battle Arena':'Puzzle Quest';document.getElementById('arcadeBest').textContent=arcade.best.toLocaleString();document.getElementById('arcadeScore').textContent='0';document.getElementById('arcadeLevel').textContent='1';document.getElementById('arcadeExtra').innerHTML=mode==='arena'?'SHIELDS <b id="arcadeLevel">3</b>':mode==='puzzle'?'MOVES <b id="arcadeLevel">20</b>':'LEVEL <b id="arcadeLevel">1</b>';
+function launchArcade(mode){audioReady();document.getElementById('gameResult')?.classList.remove('show');exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.boost=100;arcade.boosting=false;arcade.roadTime=0;arcade.shake=0;arcade.running=false;
+ const stage=document.getElementById('arcadeStage');stage.classList.add('active');document.body.classList.add('arcade-immersive');document.getElementById('arcadeTitle').textContent=mode==='arena'?'Battle Arena':'Puzzle Quest';document.getElementById('arcadeBest').textContent=arcade.best.toLocaleString();document.getElementById('arcadeScore').textContent='0';document.getElementById('arcadeLevel').textContent='1';document.getElementById('arcadeExtra').innerHTML=mode==='arena'?'SHIELDS <b id="arcadeLevel">3</b>':mode==='puzzle'?'MOVES <b id="arcadeLevel">20</b>':'LEVEL <b id="arcadeLevel">1</b>';
  document.getElementById('puzzleMount').style.display=mode==='puzzle'?'block':'none';document.getElementById('arcadeScreen').style.display=mode==='puzzle'?'none':'block';document.getElementById('arcadeControls').style.display=mode==='puzzle'?'none':'flex';
  document.getElementById('arcadeControlHint').textContent=mode==='racer'?'Steer: ← → / A D · Nitro: ↑ / W · Pause: P':'Move with WASD / arrow keys · Space to fire · P to pause';document.getElementById('arcadeAction').textContent=mode==='racer'?'Ⅱ':'●';const nitroBtn=document.getElementById('arcadeNitro');if(nitroBtn)nitroBtn.style.display=mode==='racer'?'inline-flex':'none';document.getElementById('arcadeOverlay').classList.remove('hidden');
  if(mode==='puzzle'){buildPuzzle();arcadeOverlay('Fruit frenzy',`PREVIOUS BEST: ${arcade.best.toLocaleString()} · Swipe fruits in any direction. Match 3 or more to score. You have 20 moves.`,'🍓','START PUZZLE')}
@@ -367,7 +418,7 @@ function launchArcade(mode){audioReady();exitArcade(false);arcade.mode=mode;arca
  try{if(stage.requestFullscreen)stage.requestFullscreen().catch(()=>{});}catch(e){}
 
 }
-function exitArcade(hide=true){arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;arcade.keys={};if(hide){document.getElementById('arcadeStage')?.classList.remove('active');document.body.classList.remove('arcade-immersive');if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{});}}}
+function exitArcade(hide=true){document.getElementById('gameResult')?.classList.remove('show');arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;arcade.keys={};if(hide){document.getElementById('arcadeStage')?.classList.remove('active');document.body.classList.remove('arcade-immersive');if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{});}}}
 function startArcade(){audioReady();if(arcade.gameOver){launchArcade(arcade.mode);return}document.getElementById('arcadeOverlay').classList.add('hidden');if(arcade.mode==='puzzle'){updatePuzzleStats();return}arcade.running=true;arcade.last=performance.now();arcadeLoop(arcade.last)}
 function pauseArcade(){if(!arcade.running)return;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcadeOverlay('PAUSED','Take a breath. Resume when you are ready.','Ⅱ','RESUME')}
 function arcadeLoop(now){if(!arcade.running)return;const dt=Math.min((now-arcade.last)/1000,.04);arcade.last=now;if(arcade.mode==='racer')updateRacer(dt);else updateArena(dt);drawArcadeScene();if(arcade.running)arcade.raf=requestAnimationFrame(arcadeLoop)}
@@ -415,7 +466,17 @@ function updateRacer(dt){
  arcade.objects.forEach(o=>o.z+=dt*speed);for(const o of arcade.objects){if(!o.hit&&o.z>.88&&Math.abs(o.lane-arcade.player)<.45){o.hit=true;if(o.type==='orb'){arcade.score+=75;arcade.boost=Math.min(100,arcade.boost+18);soundPickup();toast('Energy core +75 · Nitro recharged')}else{soundCrash();endArcade('CRASHED','You collided with traffic. Avoid vehicles and use nitro to escape.','💥')}}}
  arcade.objects=arcade.objects.filter(o=>o.z<1.15);setArcadeScore(arcade.score)
 }
-function endArcade(title,desc,icon){arcade.gameOver=true;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);setArcadeScore(arcade.score);arcadeOverlay(title,desc+' Final score: '+Math.floor(arcade.score)+'. Best: '+arcadeBest(arcade.mode)+'.',icon,'PLAY AGAIN')}
+function showGameResult(title,message,icon='🏆'){
+ arcade.gameOver=true;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;
+ const score=Math.floor(arcade.score),best=arcadeBest(arcade.mode);
+ document.getElementById('resultTitle').textContent=title;
+ document.getElementById('resultMessage').textContent=message;
+ document.getElementById('resultIcon').textContent=icon;
+ document.getElementById('resultScore').textContent=score.toLocaleString();
+ document.getElementById('resultBest').textContent=best.toLocaleString();
+ document.getElementById('gameResult').classList.add('show');
+}
+function endArcade(title,desc,icon){setArcadeScore(arcade.score);showGameResult(title,desc,icon)}
 function drawArena(c,w,h){const bg=c.createRadialGradient(w/2,h/2,20,w/2,h/2,470);bg.addColorStop(0,'#263354');bg.addColorStop(1,'#080d19');c.fillStyle=bg;c.fillRect(0,0,w,h);c.strokeStyle='#51698d55';c.lineWidth=1;for(let x=0;x<w;x+=45){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=45){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}c.strokeStyle='#6cf5e7';c.lineWidth=4;c.shadowColor='#55f5e9';c.shadowBlur=16;c.strokeRect(24,24,w-48,h-48);c.shadowBlur=0;
  arcade.objects.forEach(o=>{if(o.type==='enemy'){c.fillStyle='#ff536d';c.shadowColor='#ff3b61';c.shadowBlur=18;c.beginPath();c.arc(o.x,o.y,15,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#fff';c.fillRect(o.x-5,o.y-3,4,4);c.fillRect(o.x+3,o.y-3,4,4)}else if(o.type==='shot'){c.fillStyle='#7df9ef';c.shadowColor='#5df5ec';c.shadowBlur=12;c.beginPath();c.arc(o.x,o.y,5,0,Math.PI*2);c.fill();c.shadowBlur=0}});
  const px=arcade.playerX??w/2,py=arcade.playerY??h/2;c.save();c.translate(px,py);c.fillStyle='#67f3e8';c.shadowColor='#45f5ec';c.shadowBlur=25;c.beginPath();c.moveTo(0,-21);c.lineTo(17,15);c.lineTo(0,9);c.lineTo(-17,15);c.closePath();c.fill();c.shadowBlur=0;c.restore();c.fillStyle='#eef7ff';c.font='bold 16px system-ui';c.fillText('SURVIVAL PROTOCOL',24,20)}
@@ -462,7 +523,7 @@ function completeFruitTurn(){
  let cascades=0;while(cascades<10&&resolvePuzzle())cascades++;
  drawPuzzle();updatePuzzleStats();
  if(arcade.score>=arcade.level*300){arcade.level++;sfx(780,.2,'triangle',.06,400);const h=document.getElementById('puzzleHelp');if(h)h.textContent=`LEVEL ${arcade.level-1} CLEARED! Next target: ${arcade.level*300}`}
- if(arcade.moves<=0){arcade.gameOver=true;setArcadeScore(arcade.score);arcadeOverlay('FRUIT QUEST COMPLETE',`You scored ${arcade.score} points. Your best: ${arcadeBest('puzzle')}.`,'🏆','PLAY AGAIN')}
+ if(arcade.moves<=0){setArcadeScore(arcade.score);showGameResult('FRUIT QUEST COMPLETE','You used all your moves. Great matching!','🍓')}
 }
 function puzzleSwap(a,b){
  if(arcade.busy||arcade.moves<=0||a===b)return;
@@ -495,6 +556,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElement
 function bindHold(id,key){const el=document.getElementById(id);if(!el)return;const on=e=>{e.preventDefault();arcade.keys[key]=true},off=e=>{e.preventDefault();arcade.keys[key]=false};el.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(n=>el.addEventListener(n,off))}
 bindHold('arcadeLeft','left');bindHold('arcadeRight','right');bindHold('arcadeNitro','up');document.getElementById('arcadeAction')?.addEventListener('click',()=>{if(arcade.mode==='arena')fireArena();else pauseArcade()});
 
+document.getElementById('resultReplay')?.addEventListener('click',()=>launchArcade(arcade.mode));
+document.getElementById('resultBack')?.addEventListener('click',()=>exitArcade(true));
 function go(page){if(page!=="games")exitArcade();document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile",admin:"Super Admin Panel"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="admin"){loadAdminUsers();loadPointTransactions();loadAdminDailyClaims();}if(page==="leaderboard")loadLeaderboard();if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
 const copyGvxButton=document.getElementById("copyGvxContract");if(copyGvxButton)copyGvxButton.addEventListener("click",async()=>{const address="0x57E9482E2388d2859D16A3F0cfE0539E49B1B8eE";try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(address);else{const t=document.createElement("textarea");t.value=address;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()}toast("GVX contract address copied")}catch(e){toast("Could not copy contract address")}});
 document.getElementById("nav")?.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)go(b.dataset.page)});
