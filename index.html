@@ -42,6 +42,40 @@ body{background:radial-gradient(ellipse at 78% 0%,#27316b55 0,transparent 34%),r
 @keyframes tilePop{50%{transform:scale(.75);opacity:.35}}
 @media(max-width:760px){.arcade-cards{grid-template-columns:1fr}.arcade-card{display:grid;grid-template-columns:112px 1fr;min-height:140px}.arcade-card-art{height:100%;min-height:140px;font-size:45px}.arcade-card-body{padding:13px}.arcade-card .btn{padding:9px}.arcade-screen{min-height:240px}}
 
+
+/* IMMERSIVE GAME MODE */
+body.arcade-immersive{overflow:hidden!important}
+.arcade-stage.active{
+ position:fixed!important;inset:0!important;z-index:9999!important;
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ margin:0!important;border:0!important;border-radius:0!important;
+ display:flex!important;flex-direction:column!important;overflow:auto!important;
+ padding:clamp(8px,1.5vw,18px)!important;
+ padding-top:max(8px,env(safe-area-inset-top))!important;
+ padding-bottom:max(8px,env(safe-area-inset-bottom))!important;
+ background:radial-gradient(ellipse at 50% 0%,#1d315b 0,#080d1b 60%)!important;
+}
+.arcade-stage.active .arcade-toolbar{flex:0 0 auto;padding:8px 4px 12px}
+.arcade-stage.active .arcade-screen{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;border-radius:14px}
+.arcade-stage.active .arcade-screen canvas{width:100%;height:100%;max-height:none;object-fit:contain;aspect-ratio:900/520}
+.arcade-stage.active #puzzleMount{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0;overflow:auto}
+.arcade-stage.active .puzzle-board{width:min( min(92vw,68vh),560px);max-width:92vw}
+.arcade-stage.active .arcade-controls{flex:0 0 auto;padding:10px 4px;gap:12px}
+.arcade-stage.active .arcade-controls button{min-width:54px;min-height:48px}
+.arcade-stage.active .arcade-footnote{display:none}
+.arcade-stage.active .arcade-stat{font-size:10px;padding:6px 8px}
+.arcade-stage.active .arcade-toolbar h3{font-size:clamp(14px,2.5vw,20px)}
+@media(max-width:600px){
+ .arcade-stage.active{padding-left:8px!important;padding-right:8px!important}
+ .arcade-stage.active .arcade-toolbar{gap:7px}
+ .arcade-stage.active .arcade-stats{gap:4px}
+ .arcade-stage.active .arcade-controls small{width:100%;text-align:center;font-size:10px}
+}
+
+</style>
+
+<style id="gameverse-arcade-upgrade">
+.arcade-screen{background:#050817;border:1px solid #45527a;box-shadow:0 0 0 1px #53f2e422,0 24px 80px #0008,inset 0 0 60px #314d8a22;border-radius:18px;overflow:hidden}.arcade-screen canvas{display:block;width:100%;height:auto;aspect-ratio:900/520;touch-action:none}.arcade-stage.active{border-color:#4e668e;box-shadow:0 25px 90px #0008,0 0 35px #53f2e411}.arcade-controls{align-items:center;flex-wrap:wrap}.arcade-controls button{min-width:54px;min-height:46px;touch-action:none;user-select:none}.arcade-controls #arcadeNitro{border-color:#4b9c9a;color:#7affef;background:linear-gradient(135deg,#123a42,#182743)}.arcade-card-art{background:radial-gradient(ellipse at 50% 100%,#1c8b9a55,transparent 60%),linear-gradient(145deg,#111b3a,#251c45)!important}.arcade-card:first-child .arcade-card-art{background:radial-gradient(ellipse at 50% 100%,#ff4d9a55,transparent 60%),linear-gradient(145deg,#111b3a,#251c45)!important}
 </style>
 </head>
 <body>
@@ -103,7 +137,7 @@ body{background:radial-gradient(ellipse at 78% 0%,#27316b55 0,transparent 34%),r
   <div class="arcade-overlay" id="arcadeOverlay"><div class="arcade-overlay-panel"><div style="font-size:45px" id="arcadeOverlayIcon">🏁</div><h3 id="arcadeOverlayTitle">Ready to race?</h3><p id="arcadeOverlayText">Press start to enter the neon city.</p><button class="btn" id="arcadeStart" type="button">START GAME</button></div></div>
  </div>
  <div id="puzzleMount" style="display:none"><div class="puzzle-board" id="puzzleBoard"></div><div class="puzzle-help" id="puzzleHelp">Swap two adjacent crystals to make a match of three or more.</div></div>
- <div class="arcade-controls" id="arcadeControls"><button class="btn secondary" type="button" id="arcadeLeft">◀</button><button class="btn secondary" type="button" id="arcadeAction">●</button><button class="btn secondary" type="button" id="arcadeRight">▶</button><small id="arcadeControlHint">Use ← → or A / D to steer · Space to pause</small></div>
+ <div class="arcade-controls" id="arcadeControls"><button class="btn secondary" type="button" id="arcadeLeft">◀</button><button class="btn secondary" type="button" id="arcadeAction">●</button><button class="btn secondary" type="button" id="arcadeRight">▶</button><button class="btn secondary" type="button" id="arcadeNitro" style="display:none">⚡ NITRO</button><small id="arcadeControlHint">Use ← → or A / D to steer · Space to pause</small></div>
 </div>
 <p class="arcade-footnote">Game scores are local demo scores only. They do not generate GVX tokens, cash rewards or blockchain transactions. Connect-to-wallet and competitive multiplayer features can be added separately after the games are tested.</p>
 </section>
@@ -295,36 +329,69 @@ async function syncLeaderboard(){if(!isMainAdmin())return;const el=document.getE
 function claimMission(id){claimDailyMission(id)}
 
 // ---------------- GAMEVERSE ARCADE ENGINE ----------------
-const arcade={mode:null,running:false,gameOver:false,raf:0,last:0,score:0,best:0,level:1,player:0,playerX:450,playerY:260,objects:[],keys:{},spawn:0,health:3,moves:20,grid:[],selected:-1,busy:false};
+const arcade={mode:null,running:false,gameOver:false,raf:0,last:0,score:0,best:0,level:1,player:0,playerX:450,playerY:260,objects:[],keys:{},spawn:0,health:3,moves:20,grid:[],selected:-1,busy:false,boost:100,boosting:false,roadTime:0,shake:0};
 const arcadeCanvas=document.getElementById('arcadeCanvas'),arcadeCtx=arcadeCanvas?.getContext('2d');
 const arcadeBestKey=m=>'gv_arcade_best_'+m;
 function arcadeBest(m){return Number(localStorage.getItem(arcadeBestKey(m))||0)}
 function setArcadeScore(n){arcade.score=Math.max(0,Math.floor(n));const el=document.getElementById('arcadeScore');if(el)el.textContent=arcade.score.toLocaleString();if(arcade.mode){arcade.best=Math.max(arcade.best,arcade.score);if(arcade.best>arcadeBest(arcade.mode))localStorage.setItem(arcadeBestKey(arcade.mode),String(arcade.best));const b=document.getElementById('arcadeBest');if(b)b.textContent=arcadeBest(arcade.mode).toLocaleString()}}
 function arcadeOverlay(title,desc,icon='🎮',button='PLAY AGAIN'){const o=document.getElementById('arcadeOverlay');if(!o)return;o.classList.remove('hidden');document.getElementById('arcadeOverlayTitle').textContent=title;document.getElementById('arcadeOverlayText').textContent=desc;document.getElementById('arcadeOverlayIcon').textContent=icon;document.getElementById('arcadeStart').textContent=button}
-function launchArcade(mode){exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.running=false;
- const stage=document.getElementById('arcadeStage');stage.classList.add('active');document.getElementById('arcadeTitle').textContent=mode==='racer'?'Neon Racers':mode==='arena'?'Battle Arena':'Puzzle Quest';document.getElementById('arcadeBest').textContent=arcade.best.toLocaleString();document.getElementById('arcadeScore').textContent='0';document.getElementById('arcadeLevel').textContent='1';document.getElementById('arcadeExtra').innerHTML=mode==='arena'?'SHIELDS <b id="arcadeLevel">3</b>':mode==='puzzle'?'MOVES <b id="arcadeLevel">20</b>':'LEVEL <b id="arcadeLevel">1</b>';
+function launchArcade(mode){exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.boost=100;arcade.boosting=false;arcade.roadTime=0;arcade.shake=0;arcade.running=false;
+ const stage=document.getElementById('arcadeStage');stage.classList.add('active');document.body.classList.add('arcade-immersive');document.getElementById('arcadeTitle').textContent=mode==='racer'?'Neon Racers':mode==='arena'?'Battle Arena':'Puzzle Quest';document.getElementById('arcadeBest').textContent=arcade.best.toLocaleString();document.getElementById('arcadeScore').textContent='0';document.getElementById('arcadeLevel').textContent='1';document.getElementById('arcadeExtra').innerHTML=mode==='arena'?'SHIELDS <b id="arcadeLevel">3</b>':mode==='puzzle'?'MOVES <b id="arcadeLevel">20</b>':'LEVEL <b id="arcadeLevel">1</b>';
  document.getElementById('puzzleMount').style.display=mode==='puzzle'?'block':'none';document.getElementById('arcadeScreen').style.display=mode==='puzzle'?'none':'block';document.getElementById('arcadeControls').style.display=mode==='puzzle'?'none':'flex';
- document.getElementById('arcadeControlHint').textContent=mode==='racer'?'Use ← → or A / D to steer · Space to pause':'Move with WASD / arrow keys · Space to fire · P to pause';document.getElementById('arcadeAction').textContent=mode==='racer'?'Ⅱ':'●';document.getElementById('arcadeOverlay').classList.remove('hidden');
- if(mode==='puzzle'){buildPuzzle();arcadeOverlay('Crystal grid','Swap adjacent crystals. Match 3 or more to score. You have 20 moves.','💎','START PUZZLE')}
- else {drawArcadeScene();arcadeOverlay(mode==='racer'?'Ready to race?':'Enter the arena',mode==='racer'?'Dodge traffic and collect energy orbs. The longer you survive, the faster it gets.':'Move around the arena and fire at incoming drones. Do not let them touch you.',mode==='racer'?'🏁':'⚔️','START GAME')}
- stage.scrollIntoView({behavior:'smooth',block:'start'});
+ document.getElementById('arcadeControlHint').textContent=mode==='racer'?'Steer: ← → / A D · Nitro: ↑ / W · Pause: P':'Move with WASD / arrow keys · Space to fire · P to pause';document.getElementById('arcadeAction').textContent=mode==='racer'?'Ⅱ':'●';const nitroBtn=document.getElementById('arcadeNitro');if(nitroBtn)nitroBtn.style.display=mode==='racer'?'inline-flex':'none';document.getElementById('arcadeOverlay').classList.remove('hidden');
+ if(mode==='puzzle'){buildPuzzle();arcadeOverlay('Crystal grid',`PREVIOUS BEST: ${arcade.best.toLocaleString()} · Swap adjacent crystals. Match 3 or more to score. You have 20 moves.`,'💎','START PUZZLE')}
+ else {drawArcadeScene();arcadeOverlay(mode==='racer'?'Ready to race?':'Enter the arena',`PREVIOUS HIGH SCORE: ${arcade.best.toLocaleString()} · `+(mode==='racer'?'Dodge traffic and collect energy orbs. The longer you survive, the faster it gets.':'Move around the arena and fire at incoming drones. Do not let them touch you.'),mode==='racer'?'🏁':'⚔️','START GAME')}
+ try{if(stage.requestFullscreen)stage.requestFullscreen().catch(()=>{});}catch(e){}
+
 }
-function exitArcade(hide=true){arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;arcade.keys={};if(hide)document.getElementById('arcadeStage')?.classList.remove('active');}
+function exitArcade(hide=true){arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;arcade.keys={};if(hide){document.getElementById('arcadeStage')?.classList.remove('active');document.body.classList.remove('arcade-immersive');if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{});}}}
 function startArcade(){if(arcade.gameOver){launchArcade(arcade.mode);return}document.getElementById('arcadeOverlay').classList.add('hidden');if(arcade.mode==='puzzle'){updatePuzzleStats();return}arcade.running=true;arcade.last=performance.now();arcadeLoop(arcade.last)}
 function pauseArcade(){if(!arcade.running)return;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcadeOverlay('PAUSED','Take a breath. Resume when you are ready.','Ⅱ','RESUME')}
 function arcadeLoop(now){if(!arcade.running)return;const dt=Math.min((now-arcade.last)/1000,.04);arcade.last=now;if(arcade.mode==='racer')updateRacer(dt);else updateArena(dt);drawArcadeScene();if(arcade.running)arcade.raf=requestAnimationFrame(arcadeLoop)}
 function drawArcadeScene(){if(!arcadeCtx||!arcade.mode)return;const c=arcadeCtx,w=arcadeCanvas.width,h=arcadeCanvas.height;c.clearRect(0,0,w,h);if(arcade.mode==='racer')drawRacer(c,w,h);else if(arcade.mode==='arena')drawArena(c,w,h)}
-function drawRacer(c,w,h){const sky=c.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#070d22');sky.addColorStop(.52,'#25234b');sky.addColorStop(1,'#080c18');c.fillStyle=sky;c.fillRect(0,0,w,h);
- // distant skyline and glowing horizon
- for(let i=0;i<24;i++){let x=i*42-10,bh=50+(i*37%110);c.fillStyle=i%2?'#101b3b':'#171a3d';c.fillRect(x,255-bh,30,bh);c.fillStyle='#52e8e6';for(let y=265-bh;y<250;y+=17)if((i+y)%3)c.fillRect(x+7,y,3,5)}
- c.fillStyle='#0b1120';c.beginPath();c.moveTo(w*.34,230);c.lineTo(w*.66,230);c.lineTo(w*1.12,h);c.lineTo(-w*.12,h);c.closePath();c.fill();c.strokeStyle='#5df3e7';c.shadowColor='#38f3eb';c.shadowBlur=14;c.lineWidth=3;c.beginPath();c.moveTo(w*.34,230);c.lineTo(-w*.12,h);c.moveTo(w*.66,230);c.lineTo(w*1.12,h);c.stroke();c.shadowBlur=0;
- const progress=(arcade.score%600)/600;for(let i=0;i<9;i++){let z=(i/9+progress)%1,y=230+z*z*(h-230),spread=4+z*30; c.fillStyle='#e2faff';c.globalAlpha=.25+z*.7;c.fillRect(w/2-spread,y,3+z*3,22*z+3);c.fillRect(w/2+spread,y,3+z*3,22*z+3)}c.globalAlpha=1;
- // traffic and energy pickups
- arcade.objects.forEach(o=>{let z=o.z,scale=.25+z*.9,x=w/2+o.lane*(w*.18)*z,y=230+z*(h-265);if(o.type==='orb'){c.shadowColor='#5df6ec';c.shadowBlur=20;c.fillStyle='#70fff1';c.beginPath();c.arc(x,y,8*scale+3,0,Math.PI*2);c.fill();c.shadowBlur=0}else{c.fillStyle='#ff526f';c.shadowColor='#ff365b';c.shadowBlur=18;c.fillRect(x-22*scale,y-30*scale,44*scale,58*scale);c.fillStyle='#f9d7ff';c.fillRect(x-14*scale,y-24*scale,28*scale,9*scale);c.fillStyle='#10172b';c.fillRect(x-25*scale,y+15*scale,8*scale,15*scale);c.fillRect(x+17*scale,y+15*scale,8*scale,15*scale);c.shadowBlur=0}});
- // player car
- const px=w/2+arcade.player*135,py=h-90;c.shadowColor='#31f6ee';c.shadowBlur=26;c.fillStyle='#41e9e4';c.beginPath();c.moveTo(px,py-44);c.lineTo(px+42,py-12);c.lineTo(px+35,py+32);c.lineTo(px-35,py+32);c.lineTo(px-42,py-12);c.closePath();c.fill();c.shadowBlur=0;c.fillStyle='#152c4a';c.beginPath();c.moveTo(px,py-32);c.lineTo(px+23,py-9);c.lineTo(px-23,py-9);c.closePath();c.fill();c.fillStyle='#d7ffff';c.fillRect(px-27,py+22,12,5);c.fillRect(px+15,py+22,12,5);
- c.fillStyle='#e7f5ff';c.font='bold 18px system-ui';c.fillText('NEON DISTRICT',25,35);c.font='12px system-ui';c.fillStyle='#9eafd0';c.fillText('NIGHT RUN  /  SECTOR 07',25,55)}
-function updateRacer(dt){arcade.player=Math.max(-1,Math.min(1,arcade.player+((arcade.keys.left?-1:0)+(arcade.keys.right?1:0))*dt*2.8));arcade.score+=dt*16;arcade.spawn+=dt;let speed=.38+Math.min(arcade.score/1600,.6);if(arcade.spawn>Math.max(.38,.9-speed*.5)){arcade.spawn=0;arcade.objects.push({type:Math.random()<.32?'orb':'car',lane:Math.floor(Math.random()*3)-1,z:.04})}arcade.objects.forEach(o=>o.z+=dt*speed);for(const o of arcade.objects){if(!o.hit&&o.z>.88&&Math.abs(o.lane-arcade.player)<.45){o.hit=true;if(o.type==='orb'){arcade.score+=75;toast('Energy orb +75')}else{endArcade('CRASHED','Traffic collision. Try again and beat your distance record.','💥')}}}arcade.objects=arcade.objects.filter(o=>o.z<1.15);setArcadeScore(arcade.score)}
+function drawRacer(c,w,h){
+ const t=arcade.roadTime||0, horizon=190;
+ // cinematic dusk sky and distant city
+ const sky=c.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#050817');sky.addColorStop(.42,'#171b43');sky.addColorStop(.72,'#54285e');sky.addColorStop(1,'#090d1c');c.fillStyle=sky;c.fillRect(0,0,w,h);
+ const sun=c.createRadialGradient(w*.5,horizon,2,w*.5,horizon,155);sun.addColorStop(0,'#ffb5d866');sun.addColorStop(.45,'#a75b9a22');sun.addColorStop(1,'#a75b9a00');c.fillStyle=sun;c.fillRect(w*.25,0,w*.5,360);
+ // layered skyline with lit windows
+ for(let layer=0;layer<2;layer++){for(let i=0;i<31;i++){const bw=22+(i*17%27),x=i*32-8+(layer?12:0),bh=35+((i*43+layer*31)%105);c.fillStyle=layer?'#0b1630':'#101a37';c.fillRect(x,horizon-bh,bw,bh);c.fillStyle=layer?'#55f3e8':'#a77cff';c.globalAlpha=.25+(i%3)*.12;for(let yy=horizon-bh+9;yy<horizon-5;yy+=13)for(let xx=x+5;xx<x+bw-3;xx+=9)if((xx+yy+i)%4)c.fillRect(xx,yy,3,5);c.globalAlpha=1}}
+ // road shoulder and asphalt perspective
+ const curve=Math.sin(t*.23)*34+Math.sin(t*.071)*18;
+ c.fillStyle='#080d18';c.beginPath();c.moveTo(w*.39+curve*.15,horizon);c.lineTo(w*.61+curve*.15,horizon);c.lineTo(w*1.18,h);c.lineTo(-w*.18,h);c.closePath();c.fill();
+ const road=c.createLinearGradient(0,horizon,0,h);road.addColorStop(0,'#252a42');road.addColorStop(.5,'#151b2b');road.addColorStop(1,'#090e19');c.fillStyle=road;c.beginPath();c.moveTo(w*.395+curve*.15,horizon);c.lineTo(w*.605+curve*.15,horizon);c.lineTo(w*1.12,h);c.lineTo(-w*.12,h);c.closePath();c.fill();
+ // edge rails, reflective lane lines and animated road dashes
+ c.save();c.lineCap='round';for(const side of [-1,1]){c.strokeStyle=side<0?'#51f4ed':'#ff5ca8';c.shadowColor=c.strokeStyle;c.shadowBlur=18;c.lineWidth=4;c.beginPath();c.moveTo(w*.395+curve*.15,horizon);c.lineTo(side<0?-w*.12:w*1.12,h);c.stroke()}c.shadowBlur=0;
+ for(let lane=-1;lane<=1;lane+=2){for(let i=0;i<12;i++){let z=((i/12+(t*.42)%1)%1),y=horizon+z*z*(h-horizon),x=w/2+curve*z*z+lane*(w*.105*z+.5);let len=7+z*35;c.fillStyle='#d9e9ff';c.globalAlpha=.12+z*.55;c.fillRect(x-1.5,y,3+z*2,len)}}c.globalAlpha=1;c.restore();
+ // roadside light pylons and speed streaks
+ for(let i=0;i<9;i++){let z=((i/9+(t*.28)%1)%1),y=horizon+z*z*(h-horizon),spread=55+z*490;for(const side of [-1,1]){let x=w/2+curve*z*z+side*spread;c.strokeStyle=side<0?'#48e9ff':'#ff68b5';c.globalAlpha=.2+z*.7;c.lineWidth=1+z*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+side*(9+z*15),y-(14+z*35));c.stroke();c.fillStyle=c.strokeStyle;c.fillRect(x-2,y-18-z*25,4+z*3,4+z*3)}}c.globalAlpha=1;
+ // traffic and collectible energy rendered in perspective
+ arcade.objects.forEach(o=>{let z=o.z,scale=.18+z*1.05,x=w/2+curve*z*z+o.lane*(w*.19)*z,y=horizon+z*(h-255);if(o.type==='orb'){c.save();c.translate(x,y);c.rotate(t*2);c.shadowColor='#69fff2';c.shadowBlur=25;c.strokeStyle='#8cfff6';c.lineWidth=3;c.beginPath();c.arc(0,0,10*scale+4,0,Math.PI*2);c.stroke();c.fillStyle='#c9fffb';c.beginPath();c.arc(0,0,4*scale+2,0,Math.PI*2);c.fill();c.restore()}else{drawTrafficCar(c,x,y,scale)}});
+ // player's detailed electric supercar, rear view
+ const px=w/2+arcade.player*145+curve*.45,py=h-104;drawPlayerCar(c,px,py,1,arcade.boosting);
+ // nitro trails and HUD
+ if(arcade.boosting){c.save();c.globalAlpha=.7;c.shadowColor='#4fffee';c.shadowBlur=25;c.fillStyle='#68fff4';for(let i=0;i<7;i++){let x=px+(Math.random()-.5)*44,y=py+38+Math.random()*50;c.fillRect(x,y,2+Math.random()*3,10+Math.random()*25)}c.restore()}
+ c.fillStyle='#effaff';c.font='800 18px system-ui';c.fillText('NEON DISTRICT',25,35);c.font='11px system-ui';c.fillStyle='#aab9d6';c.fillText('NIGHT RUN  /  SECTOR 07',25,54);
+ // speed and nitro bars
+ const speed= Math.min(299,110+Math.floor(arcade.score/8)+(arcade.boosting?75:0));c.fillStyle='#081020cc';roundRect(c,w-175,18,150,72,12);c.fillStyle='#dffcff';c.font='bold 27px system-ui';c.fillText(String(speed),w-158,53);c.font='10px system-ui';c.fillStyle='#9db1d2';c.fillText('KM/H',w-93,52);c.fillStyle='#26334d';roundRect(c,w-158,65,115,6,4);c.fillStyle='#58f3e7';roundRect(c,w-158,65,115*(arcade.boost/100),6,4);c.font='9px system-ui';c.fillStyle='#a9bedb';c.fillText('NITRO',w-158,84);
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.fill()}
+function drawTrafficCar(c,x,y,s){c.save();c.translate(x,y);c.scale(s,s);c.shadowColor='#ff3e72';c.shadowBlur=18;c.fillStyle='#c82f59';c.beginPath();c.moveTo(-22,-23);c.lineTo(-15,-34);c.lineTo(15,-34);c.lineTo(22,-23);c.lineTo(25,18);c.lineTo(18,26);c.lineTo(-18,26);c.lineTo(-25,18);c.closePath();c.fill();c.shadowBlur=0;c.fillStyle='#17233c';c.beginPath();c.moveTo(-14,-25);c.lineTo(-10,-32);c.lineTo(10,-32);c.lineTo(14,-25);c.closePath();c.fill();c.fillStyle='#ffdfec';c.fillRect(-19,14,8,4);c.fillRect(11,14,8,4);c.fillStyle='#080d18';c.fillRect(-28,4,6,15);c.fillRect(22,4,6,15);c.restore()}
+function drawPlayerCar(c,x,y,s,nitro){c.save();c.translate(x,y);c.scale(s,s);c.shadowColor=nitro?'#fff':'#43f5ed';c.shadowBlur=nitro?38:24;
+ // tires
+ c.fillStyle='#050812';c.fillRect(-43,-5,13,54);c.fillRect(30,-5,13,54);
+ // sculpted body
+ const body=c.createLinearGradient(-42,-45,42,40);body.addColorStop(0,'#eaffff');body.addColorStop(.18,'#56f8e9');body.addColorStop(.55,'#168b9e');body.addColorStop(1,'#10294a');c.fillStyle=body;c.beginPath();c.moveTo(0,-55);c.lineTo(25,-35);c.lineTo(39,4);c.lineTo(34,39);c.lineTo(22,48);c.lineTo(-22,48);c.lineTo(-34,39);c.lineTo(-39,4);c.lineTo(-25,-35);c.closePath();c.fill();
+ c.shadowBlur=0;c.fillStyle='#07172d';c.beginPath();c.moveTo(0,-43);c.lineTo(18,-28);c.lineTo(25,-3);c.lineTo(-25,-3);c.lineTo(-18,-28);c.closePath();c.fill();c.strokeStyle='#8ffff8';c.lineWidth=2;c.stroke();
+ c.fillStyle='#f3ffff';c.shadowColor='#8fffff';c.shadowBlur=14;c.fillRect(-31,25,17,5);c.fillRect(14,25,17,5);c.shadowBlur=0;c.fillStyle='#ff315f';c.fillRect(-25,39,50,4);c.fillStyle='#0a1222';c.fillRect(-13,4,26,8);c.restore()}
+function updateRacer(dt){
+ arcade.roadTime+=dt;const steering=(arcade.keys.left?-1:0)+(arcade.keys.right?1:0);arcade.player=Math.max(-1,Math.min(1,arcade.player+steering*dt*2.8));
+ arcade.boosting=!!(arcade.keys.up&&arcade.boost>0);if(arcade.boosting)arcade.boost=Math.max(0,arcade.boost-dt*30);else arcade.boost=Math.min(100,arcade.boost+dt*9);
+ const speed=.38+Math.min(arcade.score/1600,.6)+(arcade.boosting?.45:0);arcade.score+=dt*(arcade.boosting?27:16);arcade.spawn+=dt;
+ if(arcade.spawn>Math.max(.32,.9-speed*.5)){arcade.spawn=0;arcade.objects.push({type:Math.random()<.3?'orb':'car',lane:Math.floor(Math.random()*3)-1,z:.04})}
+ arcade.objects.forEach(o=>o.z+=dt*speed);for(const o of arcade.objects){if(!o.hit&&o.z>.88&&Math.abs(o.lane-arcade.player)<.45){o.hit=true;if(o.type==='orb'){arcade.score+=75;arcade.boost=Math.min(100,arcade.boost+18);toast('Energy core +75 · Nitro recharged')}else{endArcade('CRASHED','You collided with traffic. Avoid vehicles and use nitro to escape.','💥')}}}
+ arcade.objects=arcade.objects.filter(o=>o.z<1.15);setArcadeScore(arcade.score)
+}
 function endArcade(title,desc,icon){arcade.gameOver=true;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);setArcadeScore(arcade.score);arcadeOverlay(title,desc+' Final score: '+Math.floor(arcade.score)+'. Best: '+arcadeBest(arcade.mode)+'.',icon,'PLAY AGAIN')}
 function drawArena(c,w,h){const bg=c.createRadialGradient(w/2,h/2,20,w/2,h/2,470);bg.addColorStop(0,'#263354');bg.addColorStop(1,'#080d19');c.fillStyle=bg;c.fillRect(0,0,w,h);c.strokeStyle='#51698d55';c.lineWidth=1;for(let x=0;x<w;x+=45){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=45){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}c.strokeStyle='#6cf5e7';c.lineWidth=4;c.shadowColor='#55f5e9';c.shadowBlur=16;c.strokeRect(24,24,w-48,h-48);c.shadowBlur=0;
  arcade.objects.forEach(o=>{if(o.type==='enemy'){c.fillStyle='#ff536d';c.shadowColor='#ff3b61';c.shadowBlur=18;c.beginPath();c.arc(o.x,o.y,15,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#fff';c.fillRect(o.x-5,o.y-3,4,4);c.fillRect(o.x+3,o.y-3,4,4)}else if(o.type==='shot'){c.fillStyle='#7df9ef';c.shadowColor='#5df5ec';c.shadowBlur=12;c.beginPath();c.arc(o.x,o.y,5,0,Math.PI*2);c.fill();c.shadowBlur=0}});
@@ -338,9 +405,9 @@ function findMatches(){const found=new Set();for(let r=0;r<6;r++)for(let c=0;c<6
 function resolvePuzzle(){let matches=findMatches();if(!matches.length)return false;arcade.score+=matches.length*10;matches.forEach(i=>arcade.grid[i]=Math.floor(Math.random()*gems.length));setArcadeScore(arcade.score);drawPuzzle();return true}
 function puzzleClick(i){if(arcade.busy||arcade.moves<=0)return;if(arcade.selected<0){arcade.selected=i;drawPuzzle();return}const a=arcade.selected,b=i;arcade.selected=-1;if(a===b){drawPuzzle();return}if(Math.abs(a-b)!==1&&Math.abs(a-b)!==6){drawPuzzle();return}[arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];if(!findMatches().length){[arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];document.getElementById('puzzleHelp').textContent='That swap does not make a match. Try adjacent crystals.';drawPuzzle();return}arcade.moves--;for(let cascade=0;cascade<8&&resolvePuzzle();cascade++){}drawPuzzle();updatePuzzleStats();if(arcade.score>=arcade.level*300){arcade.level++;document.getElementById('puzzleHelp').textContent='Level cleared! New target: '+arcade.level*300+' points.';document.getElementById('arcadeLevel').textContent=arcade.moves}if(arcade.moves<=0){arcade.gameOver=true;arcadeOverlay('QUEST COMPLETE',`You scored ${arcade.score} points. Best score: ${arcadeBest('puzzle')}.`,'🏆','PLAY AGAIN')}}
 function arcadeKey(e,down){const k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')arcade.keys.left=down;if(k==='arrowright'||k==='d')arcade.keys.right=down;if(k==='arrowup'||k==='w')arcade.keys.up=down;if(k==='arrowdown'||k==='s')arcade.keys.down=down;if(down&&k===' '){if(arcade.mode==='arena')fireArena();else if(arcade.mode==='racer')pauseArcade()}if(down&&k==='p')pauseArcade()}
-document.addEventListener('keydown',e=>arcadeKey(e,true));document.addEventListener('keyup',e=>arcadeKey(e,false));document.getElementById('arcadeStart')?.addEventListener('click',startArcade);document.getElementById('puzzleBoard')?.addEventListener('click',e=>{const t=e.target.closest('[data-tile]');if(t)puzzleClick(Number(t.dataset.tile))});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('arcadeStage')?.classList.contains('active')){exitArcade();return}arcadeKey(e,true)});document.addEventListener('keyup',e=>arcadeKey(e,false));document.getElementById('arcadeStart')?.addEventListener('click',startArcade);document.getElementById('puzzleBoard')?.addEventListener('click',e=>{const t=e.target.closest('[data-tile]');if(t)puzzleClick(Number(t.dataset.tile))});
 function bindHold(id,key){const el=document.getElementById(id);if(!el)return;const on=e=>{e.preventDefault();arcade.keys[key]=true},off=e=>{e.preventDefault();arcade.keys[key]=false};el.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(n=>el.addEventListener(n,off))}
-bindHold('arcadeLeft','left');bindHold('arcadeRight','right');document.getElementById('arcadeAction')?.addEventListener('click',()=>{if(arcade.mode==='arena')fireArena();else pauseArcade()});
+bindHold('arcadeLeft','left');bindHold('arcadeRight','right');bindHold('arcadeNitro','up');document.getElementById('arcadeAction')?.addEventListener('click',()=>{if(arcade.mode==='arena')fireArena();else pauseArcade()});
 
 function go(page){if(page!=="games")exitArcade();document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));const titles={overview:"Welcome to GameVerse",games:"Explore games",leaderboard:"Community leaderboard",wallet:"My wallet",profile:"Player profile",admin:"Super Admin Panel"};document.getElementById("pageTitle").textContent=titles[page]||"GameVerse";if(page==="admin"){loadAdminUsers();loadPointTransactions();loadAdminDailyClaims();}if(page==="leaderboard")loadLeaderboard();if(page==="games"&&!state.completed.includes("explore")){state.completed.push("explore");if(!currentUser)state.points+=20;save();toast(currentUser?"Game catalogue explored.":"Catalogue explored · +20 guest demo points")}}
 const copyGvxButton=document.getElementById("copyGvxContract");if(copyGvxButton)copyGvxButton.addEventListener("click",async()=>{const address="0x57E9482E2388d2859D16A3F0cfE0539E49B1B8eE";try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(address);else{const t=document.createElement("textarea");t.value=address;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()}toast("GVX contract address copied")}catch(e){toast("Could not copy contract address")}});
