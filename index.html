@@ -72,6 +72,15 @@ body.arcade-immersive{overflow:hidden!important}
  .arcade-stage.active .arcade-controls small{width:100%;text-align:center;font-size:10px}
 }
 
+
+/* FRUIT MATCH + GAME FEEDBACK */
+.puzzle-board{touch-action:none;user-select:none;-webkit-user-select:none}
+.puzzle-tile{touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .12s,filter .12s}
+.puzzle-tile:active{transform:scale(.92);filter:brightness(1.25)}
+.puzzle-tile.selected{outline:3px solid #ffe28a;box-shadow:0 0 22px #ffcf5c88}
+.puzzle-tile.matched{animation:fruitBurst .28s ease}
+@keyframes fruitBurst{50%{transform:scale(1.22) rotate(8deg);filter:brightness(1.7)}100%{transform:scale(.2);opacity:.2}}
+
 </style>
 
 <style id="gameverse-arcade-upgrade">
@@ -123,12 +132,12 @@ body.arcade-immersive{overflow:hidden!important}
 <div class="notice">This is an early website prototype. Game names and missions are illustrative. GameVerse is not affiliated with PUBG, BGMI, Free Fire or any other game publisher.</div>
 </section>
 <section class="page" id="games">
-<div class="arcade-intro"><div class="eyebrow">GAMEVERSE ARCADE · SEASON ZERO</div><h2>CHOOSE YOUR <span style="color:#66f3e7">WORLD.</span></h2><p>Three playable worlds, built directly into GameVerse. Race through a neon megacity, survive the arena, or solve glowing crystal puzzles. Your best scores are saved on this device.</p></div>
+<div class="arcade-intro"><div class="eyebrow">GAMEVERSE ARCADE · SEASON ZERO</div><h2>CHOOSE YOUR <span style="color:#66f3e7">WORLD.</span></h2><p>Three playable worlds, built directly into GameVerse. Race through a neon megacity, survive the arena, or match juicy fruit combos. Your best scores are saved on this device.</p></div>
 <div class="section-head"><h2>Featured experiences</h2><small>Playable prototypes · Mobile + desktop</small></div>
 <div class="arcade-cards">
  <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">01 · RACING</span>🏎️</div><div class="arcade-card-body"><h3>Neon Racers</h3><p>High-speed night drive. Dodge traffic, collect energy orbs and beat your distance record.</p><button class="btn" type="button" onclick="launchArcade('racer')">PLAY NOW ↗</button></div></article>
  <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">02 · SURVIVAL</span>⚔️</div><div class="arcade-card-body"><h3>Battle Arena</h3><p>Enter the combat zone. Move, aim and fire at incoming drones. Survive for the highest score.</p><button class="btn" type="button" onclick="launchArcade('arena')">PLAY NOW ↗</button></div></article>
- <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">03 · PUZZLE</span>💎</div><div class="arcade-card-body"><h3>Puzzle Quest</h3><p>Swap luminous crystals, create matches and reach the target before your moves run out.</p><button class="btn" type="button" onclick="launchArcade('puzzle')">PLAY NOW ↗</button></div></article>
+ <article class="arcade-card"><div class="arcade-card-art"><span class="arcade-label">03 · PUZZLE</span>🍓</div><div class="arcade-card-body"><h3>Puzzle Quest</h3><p>Swipe fruit in any direction to match 3 or more. Create combos and beat your best score.</p><button class="btn" type="button" onclick="launchArcade('puzzle')">PLAY NOW ↗</button></div></article>
 </div>
 <div class="arcade-stage" id="arcadeStage">
  <div class="arcade-toolbar"><div><div class="eyebrow">NOW PLAYING</div><h3 id="arcadeTitle">Neon Racers</h3></div><div class="arcade-stats"><span class="arcade-stat">SCORE <b id="arcadeScore">0</b></span><span class="arcade-stat">BEST <b id="arcadeBest">0</b></span><span class="arcade-stat" id="arcadeExtra">LEVEL <b id="arcadeLevel">1</b></span></div><button class="btn secondary" type="button" onclick="exitArcade()">EXIT ✕</button></div>
@@ -136,7 +145,7 @@ body.arcade-immersive{overflow:hidden!important}
   <canvas id="arcadeCanvas" width="900" height="520" aria-label="Game canvas"></canvas>
   <div class="arcade-overlay" id="arcadeOverlay"><div class="arcade-overlay-panel"><div style="font-size:45px" id="arcadeOverlayIcon">🏁</div><h3 id="arcadeOverlayTitle">Ready to race?</h3><p id="arcadeOverlayText">Press start to enter the neon city.</p><button class="btn" id="arcadeStart" type="button">START GAME</button></div></div>
  </div>
- <div id="puzzleMount" style="display:none"><div class="puzzle-board" id="puzzleBoard"></div><div class="puzzle-help" id="puzzleHelp">Swap two adjacent crystals to make a match of three or more.</div></div>
+ <div id="puzzleMount" style="display:none"><div class="puzzle-board" id="puzzleBoard"></div><div class="puzzle-help" id="puzzleHelp">Swipe a fruit tile toward a neighbour to swap. Match 3 or more fruits!</div></div>
  <div class="arcade-controls" id="arcadeControls"><button class="btn secondary" type="button" id="arcadeLeft">◀</button><button class="btn secondary" type="button" id="arcadeAction">●</button><button class="btn secondary" type="button" id="arcadeRight">▶</button><button class="btn secondary" type="button" id="arcadeNitro" style="display:none">⚡ NITRO</button><small id="arcadeControlHint">Use ← → or A / D to steer · Space to pause</small></div>
 </div>
 <p class="arcade-footnote">Game scores are local demo scores only. They do not generate GVX tokens, cash rewards or blockchain transactions. Connect-to-wallet and competitive multiplayer features can be added separately after the games are tested.</p>
@@ -328,6 +337,20 @@ async function loadDailyMissionStates(){if(!currentUser)return;const key=dateKey
 async function syncLeaderboard(){if(!isMainAdmin())return;const el=document.getElementById("leaderSyncStatus");el.textContent="Syncing leaderboard profiles…";try{const snap=await db.collection("users").get();let batch=db.batch(),count=0;for(const d of snap.docs){const u=d.data()||{};batch.set(db.collection("leaderboard").doc(d.id),{uid:d.id,displayName:String(u.displayName||"Player"),points:Number(u.points)||0,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});count++;if(count%400===0){await batch.commit();batch=db.batch()}}if(count%400!==0)await batch.commit();el.textContent=`Synced ${count} account(s).`;toast("Leaderboard profiles synced");loadLeaderboard()}catch(e){console.error(e);el.textContent="Sync failed. Check v5 Firestore rules."}}
 function claimMission(id){claimDailyMission(id)}
 
+
+// Lightweight synthesized arcade sound effects. Audio starts after the user's first tap.
+const gameAudio={ctx:null,muted:false};
+function audioReady(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!gameAudio.ctx&&AC)gameAudio.ctx=new AC();if(gameAudio.ctx?.state==='suspended')gameAudio.ctx.resume()}catch(e){}}
+function sfx(freq=440,duration=.09,wave='sine',volume=.045,slide=0){
+ if(gameAudio.muted)return;audioReady();const c=gameAudio.ctx;if(!c)return;
+ try{const o=c.createOscillator(),g=c.createGain(),t=c.currentTime;o.type=wave;o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(35,freq+slide),t+duration);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration)}catch(e){}
+}
+function soundMatch(n=3){sfx(430,.08,'triangle',.05,170);setTimeout(()=>sfx(620,.1,'sine',.045,220),65);if(n>=5)setTimeout(()=>sfx(880,.16,'triangle',.05,260),125)}
+function soundCrash(){sfx(150,.32,'sawtooth',.07,-90);setTimeout(()=>sfx(75,.24,'square',.035,-25),90)}
+function soundPickup(){sfx(660,.09,'sine',.05,260);setTimeout(()=>sfx(990,.12,'sine',.04,180),75)}
+function soundShoot(){sfx(520,.055,'square',.025,-300)}
+function soundHit(){sfx(210,.12,'triangle',.05,-110)}
+
 // ---------------- GAMEVERSE ARCADE ENGINE ----------------
 const arcade={mode:null,running:false,gameOver:false,raf:0,last:0,score:0,best:0,level:1,player:0,playerX:450,playerY:260,objects:[],keys:{},spawn:0,health:3,moves:20,grid:[],selected:-1,busy:false,boost:100,boosting:false,roadTime:0,shake:0};
 const arcadeCanvas=document.getElementById('arcadeCanvas'),arcadeCtx=arcadeCanvas?.getContext('2d');
@@ -335,17 +358,17 @@ const arcadeBestKey=m=>'gv_arcade_best_'+m;
 function arcadeBest(m){return Number(localStorage.getItem(arcadeBestKey(m))||0)}
 function setArcadeScore(n){arcade.score=Math.max(0,Math.floor(n));const el=document.getElementById('arcadeScore');if(el)el.textContent=arcade.score.toLocaleString();if(arcade.mode){arcade.best=Math.max(arcade.best,arcade.score);if(arcade.best>arcadeBest(arcade.mode))localStorage.setItem(arcadeBestKey(arcade.mode),String(arcade.best));const b=document.getElementById('arcadeBest');if(b)b.textContent=arcadeBest(arcade.mode).toLocaleString()}}
 function arcadeOverlay(title,desc,icon='🎮',button='PLAY AGAIN'){const o=document.getElementById('arcadeOverlay');if(!o)return;o.classList.remove('hidden');document.getElementById('arcadeOverlayTitle').textContent=title;document.getElementById('arcadeOverlayText').textContent=desc;document.getElementById('arcadeOverlayIcon').textContent=icon;document.getElementById('arcadeStart').textContent=button}
-function launchArcade(mode){exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.boost=100;arcade.boosting=false;arcade.roadTime=0;arcade.shake=0;arcade.running=false;
+function launchArcade(mode){audioReady();exitArcade(false);arcade.mode=mode;arcade.gameOver=false;arcade.score=0;arcade.best=arcadeBest(mode);arcade.level=1;arcade.health=3;arcade.moves=20;arcade.selected=-1;arcade.busy=false;arcade.objects=[];arcade.spawn=0;arcade.player=0;arcade.playerX=450;arcade.playerY=260;arcade.boost=100;arcade.boosting=false;arcade.roadTime=0;arcade.shake=0;arcade.running=false;
  const stage=document.getElementById('arcadeStage');stage.classList.add('active');document.body.classList.add('arcade-immersive');document.getElementById('arcadeTitle').textContent=mode==='racer'?'Neon Racers':mode==='arena'?'Battle Arena':'Puzzle Quest';document.getElementById('arcadeBest').textContent=arcade.best.toLocaleString();document.getElementById('arcadeScore').textContent='0';document.getElementById('arcadeLevel').textContent='1';document.getElementById('arcadeExtra').innerHTML=mode==='arena'?'SHIELDS <b id="arcadeLevel">3</b>':mode==='puzzle'?'MOVES <b id="arcadeLevel">20</b>':'LEVEL <b id="arcadeLevel">1</b>';
  document.getElementById('puzzleMount').style.display=mode==='puzzle'?'block':'none';document.getElementById('arcadeScreen').style.display=mode==='puzzle'?'none':'block';document.getElementById('arcadeControls').style.display=mode==='puzzle'?'none':'flex';
  document.getElementById('arcadeControlHint').textContent=mode==='racer'?'Steer: ← → / A D · Nitro: ↑ / W · Pause: P':'Move with WASD / arrow keys · Space to fire · P to pause';document.getElementById('arcadeAction').textContent=mode==='racer'?'Ⅱ':'●';const nitroBtn=document.getElementById('arcadeNitro');if(nitroBtn)nitroBtn.style.display=mode==='racer'?'inline-flex':'none';document.getElementById('arcadeOverlay').classList.remove('hidden');
- if(mode==='puzzle'){buildPuzzle();arcadeOverlay('Crystal grid',`PREVIOUS BEST: ${arcade.best.toLocaleString()} · Swap adjacent crystals. Match 3 or more to score. You have 20 moves.`,'💎','START PUZZLE')}
+ if(mode==='puzzle'){buildPuzzle();arcadeOverlay('Fruit frenzy',`PREVIOUS BEST: ${arcade.best.toLocaleString()} · Swipe fruits in any direction. Match 3 or more to score. You have 20 moves.`,'🍓','START PUZZLE')}
  else {drawArcadeScene();arcadeOverlay(mode==='racer'?'Ready to race?':'Enter the arena',`PREVIOUS HIGH SCORE: ${arcade.best.toLocaleString()} · `+(mode==='racer'?'Dodge traffic and collect energy orbs. The longer you survive, the faster it gets.':'Move around the arena and fire at incoming drones. Do not let them touch you.'),mode==='racer'?'🏁':'⚔️','START GAME')}
  try{if(stage.requestFullscreen)stage.requestFullscreen().catch(()=>{});}catch(e){}
 
 }
 function exitArcade(hide=true){arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcade.raf=0;arcade.keys={};if(hide){document.getElementById('arcadeStage')?.classList.remove('active');document.body.classList.remove('arcade-immersive');if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{});}}}
-function startArcade(){if(arcade.gameOver){launchArcade(arcade.mode);return}document.getElementById('arcadeOverlay').classList.add('hidden');if(arcade.mode==='puzzle'){updatePuzzleStats();return}arcade.running=true;arcade.last=performance.now();arcadeLoop(arcade.last)}
+function startArcade(){audioReady();if(arcade.gameOver){launchArcade(arcade.mode);return}document.getElementById('arcadeOverlay').classList.add('hidden');if(arcade.mode==='puzzle'){updatePuzzleStats();return}arcade.running=true;arcade.last=performance.now();arcadeLoop(arcade.last)}
 function pauseArcade(){if(!arcade.running)return;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);arcadeOverlay('PAUSED','Take a breath. Resume when you are ready.','Ⅱ','RESUME')}
 function arcadeLoop(now){if(!arcade.running)return;const dt=Math.min((now-arcade.last)/1000,.04);arcade.last=now;if(arcade.mode==='racer')updateRacer(dt);else updateArena(dt);drawArcadeScene();if(arcade.running)arcade.raf=requestAnimationFrame(arcadeLoop)}
 function drawArcadeScene(){if(!arcadeCtx||!arcade.mode)return;const c=arcadeCtx,w=arcadeCanvas.width,h=arcadeCanvas.height;c.clearRect(0,0,w,h);if(arcade.mode==='racer')drawRacer(c,w,h);else if(arcade.mode==='arena')drawArena(c,w,h)}
@@ -385,27 +408,90 @@ function drawPlayerCar(c,x,y,s,nitro){c.save();c.translate(x,y);c.scale(s,s);c.s
  c.shadowBlur=0;c.fillStyle='#07172d';c.beginPath();c.moveTo(0,-43);c.lineTo(18,-28);c.lineTo(25,-3);c.lineTo(-25,-3);c.lineTo(-18,-28);c.closePath();c.fill();c.strokeStyle='#8ffff8';c.lineWidth=2;c.stroke();
  c.fillStyle='#f3ffff';c.shadowColor='#8fffff';c.shadowBlur=14;c.fillRect(-31,25,17,5);c.fillRect(14,25,17,5);c.shadowBlur=0;c.fillStyle='#ff315f';c.fillRect(-25,39,50,4);c.fillStyle='#0a1222';c.fillRect(-13,4,26,8);c.restore()}
 function updateRacer(dt){
- arcade.roadTime+=dt;const steering=(arcade.keys.left?-1:0)+(arcade.keys.right?1:0);arcade.player=Math.max(-1,Math.min(1,arcade.player+steering*dt*2.8));
- arcade.boosting=!!(arcade.keys.up&&arcade.boost>0);if(arcade.boosting)arcade.boost=Math.max(0,arcade.boost-dt*30);else arcade.boost=Math.min(100,arcade.boost+dt*9);
- const speed=.38+Math.min(arcade.score/1600,.6)+(arcade.boosting?.45:0);arcade.score+=dt*(arcade.boosting?27:16);arcade.spawn+=dt;
- if(arcade.spawn>Math.max(.32,.9-speed*.5)){arcade.spawn=0;arcade.objects.push({type:Math.random()<.3?'orb':'car',lane:Math.floor(Math.random()*3)-1,z:.04})}
- arcade.objects.forEach(o=>o.z+=dt*speed);for(const o of arcade.objects){if(!o.hit&&o.z>.88&&Math.abs(o.lane-arcade.player)<.45){o.hit=true;if(o.type==='orb'){arcade.score+=75;arcade.boost=Math.min(100,arcade.boost+18);toast('Energy core +75 · Nitro recharged')}else{endArcade('CRASHED','You collided with traffic. Avoid vehicles and use nitro to escape.','💥')}}}
+ arcade.roadTime+=dt;const steering=(arcade.keys.left?-1:0)+(arcade.keys.right?1:0);arcade.player=Math.max(-1,Math.min(1,arcade.player+steering*dt*2.25));
+ const wasBoosting=arcade.boosting;arcade.boosting=!!(arcade.keys.up&&arcade.boost>0);if(arcade.boosting&&!wasBoosting)sfx(120,.22,'sawtooth',.035,420);if(arcade.boosting)arcade.boost=Math.max(0,arcade.boost-dt*30);else arcade.boost=Math.min(100,arcade.boost+dt*9);
+ const speed=.48+Math.min(arcade.score/1300,.72)+(arcade.boosting?.62:0);arcade.score+=dt*(arcade.boosting?27:16);arcade.spawn+=dt;
+ if(arcade.spawn>Math.max(.24,.78-speed*.48)){arcade.spawn=0;arcade.objects.push({type:Math.random()<.3?'orb':'car',lane:Math.floor(Math.random()*3)-1,z:.04})}
+ arcade.objects.forEach(o=>o.z+=dt*speed);for(const o of arcade.objects){if(!o.hit&&o.z>.88&&Math.abs(o.lane-arcade.player)<.45){o.hit=true;if(o.type==='orb'){arcade.score+=75;arcade.boost=Math.min(100,arcade.boost+18);soundPickup();toast('Energy core +75 · Nitro recharged')}else{soundCrash();endArcade('CRASHED','You collided with traffic. Avoid vehicles and use nitro to escape.','💥')}}}
  arcade.objects=arcade.objects.filter(o=>o.z<1.15);setArcadeScore(arcade.score)
 }
 function endArcade(title,desc,icon){arcade.gameOver=true;arcade.running=false;if(arcade.raf)cancelAnimationFrame(arcade.raf);setArcadeScore(arcade.score);arcadeOverlay(title,desc+' Final score: '+Math.floor(arcade.score)+'. Best: '+arcadeBest(arcade.mode)+'.',icon,'PLAY AGAIN')}
 function drawArena(c,w,h){const bg=c.createRadialGradient(w/2,h/2,20,w/2,h/2,470);bg.addColorStop(0,'#263354');bg.addColorStop(1,'#080d19');c.fillStyle=bg;c.fillRect(0,0,w,h);c.strokeStyle='#51698d55';c.lineWidth=1;for(let x=0;x<w;x+=45){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=45){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}c.strokeStyle='#6cf5e7';c.lineWidth=4;c.shadowColor='#55f5e9';c.shadowBlur=16;c.strokeRect(24,24,w-48,h-48);c.shadowBlur=0;
  arcade.objects.forEach(o=>{if(o.type==='enemy'){c.fillStyle='#ff536d';c.shadowColor='#ff3b61';c.shadowBlur=18;c.beginPath();c.arc(o.x,o.y,15,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#fff';c.fillRect(o.x-5,o.y-3,4,4);c.fillRect(o.x+3,o.y-3,4,4)}else if(o.type==='shot'){c.fillStyle='#7df9ef';c.shadowColor='#5df5ec';c.shadowBlur=12;c.beginPath();c.arc(o.x,o.y,5,0,Math.PI*2);c.fill();c.shadowBlur=0}});
  const px=arcade.playerX??w/2,py=arcade.playerY??h/2;c.save();c.translate(px,py);c.fillStyle='#67f3e8';c.shadowColor='#45f5ec';c.shadowBlur=25;c.beginPath();c.moveTo(0,-21);c.lineTo(17,15);c.lineTo(0,9);c.lineTo(-17,15);c.closePath();c.fill();c.shadowBlur=0;c.restore();c.fillStyle='#eef7ff';c.font='bold 16px system-ui';c.fillText('SURVIVAL PROTOCOL',24,20)}
-function updateArena(dt){const w=arcadeCanvas.width,h=arcadeCanvas.height,s=230;arcade.playerX=arcade.playerX??w/2;arcade.playerY=arcade.playerY??h/2;arcade.playerX=Math.max(45,Math.min(w-45,arcade.playerX+((arcade.keys.right?1:0)-(arcade.keys.left?1:0))*s*dt));arcade.playerY=Math.max(45,Math.min(h-45,arcade.playerY+((arcade.keys.down?1:0)-(arcade.keys.up?1:0))*s*dt));arcade.spawn+=dt;if(arcade.spawn>1.1){arcade.spawn=0;const edge=Math.floor(Math.random()*4);arcade.objects.push({type:'enemy',x:edge===0?35:edge===1?w-35:Math.random()*w,y:edge===2?35:edge===3?h-35:Math.random()*h})}arcade.objects.forEach(o=>{if(o.type==='enemy'){const dx=arcade.playerX-o.x,dy=arcade.playerY-o.y,d=Math.hypot(dx,dy)||1;o.x+=dx/d*75*dt;o.y+=dy/d*75*dt;if(d<27&&!o.hit){o.hit=true;arcade.health--;document.getElementById('arcadeLevel').textContent=arcade.health;if(arcade.health<=0)endArcade('SYSTEM FAILURE','Your shield was depleted. Survive longer next time.','💥')}}else if(o.type==='shot'){o.x+=o.vx*dt;o.y+=o.vy*dt}});for(const e of arcade.objects.filter(o=>o.type==='enemy'))for(const sh of arcade.objects.filter(o=>o.type==='shot'))if(Math.hypot(e.x-sh.x,e.y-sh.y)<19&&!e.dead){e.dead=true;sh.dead=true;arcade.score+=20}arcade.objects=arcade.objects.filter(o=>!o.dead&&o.x>-30&&o.x<w+30&&o.y>-30&&o.y<h+30);setArcadeScore(arcade.score+dt*2)}
-function fireArena(){if(arcade.mode!=='arena'||!arcade.running)return;const px=arcade.playerX??450,py=arcade.playerY??260;let target=arcade.objects.find(o=>o.type==='enemy');let dx=target?target.x-px:0,dy=target?target.y-py:-1,d=Math.hypot(dx,dy)||1;arcade.objects.push({type:'shot',x:px,y:py,vx:dx/d*470,vy:dy/d*470})}
-const gems=['💎','🔷','🟣','🟢','🔶','🔹'];function buildPuzzle(){arcade.grid=Array.from({length:36},()=>Math.floor(Math.random()*gems.length));arcade.moves=20;drawPuzzle();updatePuzzleStats()}
-function drawPuzzle(){const b=document.getElementById('puzzleBoard');if(!b)return;b.innerHTML=arcade.grid.map((g,i)=>`<button class="puzzle-tile ${arcade.selected===i?'selected':''}" type="button" data-tile="${i}" aria-label="Crystal ${i+1}">${gems[g]}</button>`).join('')}
-function updatePuzzleStats(){const m=document.getElementById('arcadeLevel');if(m)m.textContent=arcade.moves;const h=document.getElementById('puzzleHelp');if(h)h.textContent=`Match crystals · ${arcade.moves} moves left · Target: ${arcade.level*300} points`;setArcadeScore(arcade.score)}
-function findMatches(){const found=new Set();for(let r=0;r<6;r++)for(let c=0;c<6;c++){const i=r*6+c,g=arcade.grid[i];if(c<4&&g===arcade.grid[i+1]&&g===arcade.grid[i+2]){let n=c;while(n<6&&arcade.grid[r*6+n]===g)found.add(r*6+n++)}if(r<4&&g===arcade.grid[i+6]&&g===arcade.grid[i+12]){let n=r;while(n<6&&arcade.grid[n*6+c]===g)found.add(n++*6+c)}}return [...found]}
-function resolvePuzzle(){let matches=findMatches();if(!matches.length)return false;arcade.score+=matches.length*10;matches.forEach(i=>arcade.grid[i]=Math.floor(Math.random()*gems.length));setArcadeScore(arcade.score);drawPuzzle();return true}
-function puzzleClick(i){if(arcade.busy||arcade.moves<=0)return;if(arcade.selected<0){arcade.selected=i;drawPuzzle();return}const a=arcade.selected,b=i;arcade.selected=-1;if(a===b){drawPuzzle();return}if(Math.abs(a-b)!==1&&Math.abs(a-b)!==6){drawPuzzle();return}[arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];if(!findMatches().length){[arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];document.getElementById('puzzleHelp').textContent='That swap does not make a match. Try adjacent crystals.';drawPuzzle();return}arcade.moves--;for(let cascade=0;cascade<8&&resolvePuzzle();cascade++){}drawPuzzle();updatePuzzleStats();if(arcade.score>=arcade.level*300){arcade.level++;document.getElementById('puzzleHelp').textContent='Level cleared! New target: '+arcade.level*300+' points.';document.getElementById('arcadeLevel').textContent=arcade.moves}if(arcade.moves<=0){arcade.gameOver=true;arcadeOverlay('QUEST COMPLETE',`You scored ${arcade.score} points. Best score: ${arcadeBest('puzzle')}.`,'🏆','PLAY AGAIN')}}
+function updateArena(dt){const w=arcadeCanvas.width,h=arcadeCanvas.height,s=230;arcade.playerX=arcade.playerX??w/2;arcade.playerY=arcade.playerY??h/2;arcade.playerX=Math.max(45,Math.min(w-45,arcade.playerX+((arcade.keys.right?1:0)-(arcade.keys.left?1:0))*s*dt));arcade.playerY=Math.max(45,Math.min(h-45,arcade.playerY+((arcade.keys.down?1:0)-(arcade.keys.up?1:0))*s*dt));arcade.spawn+=dt;if(arcade.spawn>1.1){arcade.spawn=0;const edge=Math.floor(Math.random()*4);arcade.objects.push({type:'enemy',x:edge===0?35:edge===1?w-35:Math.random()*w,y:edge===2?35:edge===3?h-35:Math.random()*h})}arcade.objects.forEach(o=>{if(o.type==='enemy'){const dx=arcade.playerX-o.x,dy=arcade.playerY-o.y,d=Math.hypot(dx,dy)||1;o.x+=dx/d*75*dt;o.y+=dy/d*75*dt;if(d<27&&!o.hit){o.hit=true;arcade.health--;soundHit();document.getElementById('arcadeLevel').textContent=arcade.health;if(arcade.health<=0)endArcade('SYSTEM FAILURE','Your shield was depleted. Survive longer next time.','💥')}}else if(o.type==='shot'){o.x+=o.vx*dt;o.y+=o.vy*dt}});for(const e of arcade.objects.filter(o=>o.type==='enemy'))for(const sh of arcade.objects.filter(o=>o.type==='shot'))if(Math.hypot(e.x-sh.x,e.y-sh.y)<19&&!e.dead){e.dead=true;sh.dead=true;arcade.score+=20;sfx(310,.06,'triangle',.025,180)}arcade.objects=arcade.objects.filter(o=>!o.dead&&o.x>-30&&o.x<w+30&&o.y>-30&&o.y<h+30);setArcadeScore(arcade.score+dt*2)}
+function fireArena(){if(arcade.mode!=='arena'||!arcade.running)return;const px=arcade.playerX??450,py=arcade.playerY??260;let target=arcade.objects.find(o=>o.type==='enemy');let dx=target?target.x-px:0,dy=target?target.y-py:-1,d=Math.hypot(dx,dy)||1;arcade.objects.push({type:'shot',x:px,y:py,vx:dx/d*470,vy:dy/d*470});soundShoot()}
+
+const fruits=['🍎','🍌','🍇','🍊','🍓','🍉'];
+let puzzlePointer=null;
+function randomFruit(){return Math.floor(Math.random()*fruits.length)}
+function buildPuzzle(){
+ arcade.grid=Array.from({length:36},(_,i)=>{let v=randomFruit(),tries=0;while(tries<12&&((i%6>=2&&arcade.grid[i-1]===v&&arcade.grid[i-2]===v)||(i>=12&&arcade.grid[i-6]===v&&arcade.grid[i-12]===v))){v=randomFruit();tries++}return v});
+ arcade.moves=24;arcade.selected=-1;arcade.score=0;arcade.gameOver=false;drawPuzzle();updatePuzzleStats()
+}
+function drawPuzzle(){
+ const b=document.getElementById('puzzleBoard');if(!b)return;
+ b.innerHTML=arcade.grid.map((g,i)=>`<button class="puzzle-tile ${arcade.selected===i?'selected':''}" type="button" data-tile="${i}" aria-label="${fruits[g]} fruit ${i+1}">${fruits[g]}</button>`).join('')
+}
+function updatePuzzleStats(){
+ const m=document.getElementById('arcadeLevel');if(m)m.textContent=arcade.moves;
+ const h=document.getElementById('puzzleHelp');if(h)h.textContent=`Swipe fruit to match 3+ · ${arcade.moves} moves left · Target: ${arcade.level*300} points`;
+ setArcadeScore(arcade.score)
+}
+function findMatches(){
+ const found=new Set();
+ for(let r=0;r<6;r++)for(let c=0;c<6;c++){
+  const i=r*6+c,g=arcade.grid[i];
+  if(c<4&&g===arcade.grid[i+1]&&g===arcade.grid[i+2]){let n=c;while(n<6&&arcade.grid[r*6+n]===g)found.add(r*6+n++)}
+  if(r<4&&g===arcade.grid[i+6]&&g===arcade.grid[i+12]){let n=r;while(n<6&&arcade.grid[n*6+c]===g)found.add(n++*6+c)}
+ }
+ return [...found]
+}
+function resolvePuzzle(){
+ const matches=findMatches();if(!matches.length)return false;
+ arcade.score+=matches.length*15;soundMatch(matches.length);
+ const removed=new Set(matches);
+ // Fruit drops down each column; new fruit falls in from the top.
+ for(let c=0;c<6;c++){
+  const kept=[];for(let r=5;r>=0;r--){const i=r*6+c;if(!removed.has(i))kept.push(arcade.grid[i])}
+  for(let r=5;r>=0;r--){const idx=5-r;arcade.grid[r*6+c]=idx<kept.length?kept[idx]:randomFruit()}
+ }
+ setArcadeScore(arcade.score);drawPuzzle();return true
+}
+function completeFruitTurn(){
+ let cascades=0;while(cascades<10&&resolvePuzzle())cascades++;
+ drawPuzzle();updatePuzzleStats();
+ if(arcade.score>=arcade.level*300){arcade.level++;sfx(780,.2,'triangle',.06,400);const h=document.getElementById('puzzleHelp');if(h)h.textContent=`LEVEL ${arcade.level-1} CLEARED! Next target: ${arcade.level*300}`}
+ if(arcade.moves<=0){arcade.gameOver=true;setArcadeScore(arcade.score);arcadeOverlay('FRUIT QUEST COMPLETE',`You scored ${arcade.score} points. Your best: ${arcadeBest('puzzle')}.`,'🏆','PLAY AGAIN')}
+}
+function puzzleSwap(a,b){
+ if(arcade.busy||arcade.moves<=0||a===b)return;
+ const ar=Math.floor(a/6),ac=a%6,br=Math.floor(b/6),bc=b%6;
+ if(Math.abs(ar-br)+Math.abs(ac-bc)!==1)return;
+ [arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];
+ if(!findMatches().length){
+  [arcade.grid[a],arcade.grid[b]]=[arcade.grid[b],arcade.grid[a]];
+  const h=document.getElementById('puzzleHelp');if(h)h.textContent='No match! Swipe to line up 3 or more fruits.';sfx(180,.07,'sine',.025,-50);drawPuzzle();return
+ }
+ arcade.moves--;sfx(360,.06,'triangle',.025,100);completeFruitTurn()
+}
+function puzzlePointerDown(e){
+ const tile=e.target.closest('[data-tile]');if(!tile||arcade.gameOver||arcade.moves<=0)return;
+ e.preventDefault();audioReady();const i=Number(tile.dataset.tile);
+ puzzlePointer={id:e.pointerId,index:i,x:e.clientX,y:e.clientY};
+ try{tile.setPointerCapture(e.pointerId)}catch(err){}
+ arcade.selected=i;drawPuzzle()
+}
+function puzzlePointerUp(e){
+ if(!puzzlePointer||e.pointerId!==puzzlePointer.id)return;
+ const from=puzzlePointer.index,dx=e.clientX-puzzlePointer.x,dy=e.clientY-puzzlePointer.y;
+ puzzlePointer=null;arcade.selected=-1;
+ const threshold=12;if(Math.hypot(dx,dy)<threshold){drawPuzzle();return}
+ let to=-1;if(Math.abs(dx)>Math.abs(dy))to=from+(dx>0?1:-1);else to=from+(dy>0?6:-6);
+ if(to>=0&&to<36)puzzleSwap(from,to);else drawPuzzle()
+}
 function arcadeKey(e,down){const k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')arcade.keys.left=down;if(k==='arrowright'||k==='d')arcade.keys.right=down;if(k==='arrowup'||k==='w')arcade.keys.up=down;if(k==='arrowdown'||k==='s')arcade.keys.down=down;if(down&&k===' '){if(arcade.mode==='arena')fireArena();else if(arcade.mode==='racer')pauseArcade()}if(down&&k==='p')pauseArcade()}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('arcadeStage')?.classList.contains('active')){exitArcade();return}arcadeKey(e,true)});document.addEventListener('keyup',e=>arcadeKey(e,false));document.getElementById('arcadeStart')?.addEventListener('click',startArcade);document.getElementById('puzzleBoard')?.addEventListener('click',e=>{const t=e.target.closest('[data-tile]');if(t)puzzleClick(Number(t.dataset.tile))});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('arcadeStage')?.classList.contains('active')){exitArcade();return}arcadeKey(e,true)});document.addEventListener('keyup',e=>arcadeKey(e,false));document.getElementById('arcadeStart')?.addEventListener('click',startArcade);const fruitBoard=document.getElementById('puzzleBoard');fruitBoard?.addEventListener('pointerdown',puzzlePointerDown);fruitBoard?.addEventListener('pointerup',puzzlePointerUp);fruitBoard?.addEventListener('pointercancel',()=>{puzzlePointer=null;arcade.selected=-1;drawPuzzle()});
 function bindHold(id,key){const el=document.getElementById(id);if(!el)return;const on=e=>{e.preventDefault();arcade.keys[key]=true},off=e=>{e.preventDefault();arcade.keys[key]=false};el.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(n=>el.addEventListener(n,off))}
 bindHold('arcadeLeft','left');bindHold('arcadeRight','right');bindHold('arcadeNitro','up');document.getElementById('arcadeAction')?.addEventListener('click',()=>{if(arcade.mode==='arena')fireArena();else pauseArcade()});
 
