@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2957453976016112"
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2957453976016112"
      crossorigin="anonymous"></script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#080d1b">
 <meta name="description" content="GameVerse is a gaming community on Base. Explore games, community features and the GVX token ecosystem.">
@@ -124,6 +124,56 @@ body.arcade-immersive{overflow:hidden!important}
 <style id="gameverse-arcade-upgrade">
 .arcade-screen{background:#050817;border:1px solid #45527a;box-shadow:0 0 0 1px #53f2e422,0 24px 80px #0008,inset 0 0 60px #314d8a22;border-radius:18px;overflow:hidden}.arcade-screen canvas{display:block;width:100%;height:auto;aspect-ratio:900/520;touch-action:none}.arcade-stage.active{border-color:#4e668e;box-shadow:0 25px 90px #0008,0 0 35px #53f2e411}.arcade-controls{align-items:center;flex-wrap:wrap}.arcade-controls button{min-width:54px;min-height:46px;touch-action:none;user-select:none}.arcade-controls #arcadeNitro{border-color:#4b9c9a;color:#7affef;background:linear-gradient(135deg,#123a42,#182743)}.arcade-card-art{background:radial-gradient(ellipse at 50% 100%,#1c8b9a55,transparent 60%),linear-gradient(145deg,#111b3a,#251c45)!important}.arcade-card:first-child .arcade-card-art{background:radial-gradient(ellipse at 50% 100%,#ff4d9a55,transparent 60%),linear-gradient(145deg,#111b3a,#251c45)!important}
 </style>
+
+<style id="gameverse-mobile-font-adjustment">
+/* Smaller, more balanced typography on phones.
+   Game controls and touch targets remain large for comfortable play. */
+@media (max-width: 600px) {
+  body { font-size: 14px; line-height: 1.45; }
+  .main { padding: 14px 10px 28px; }
+  .topbar { gap: 10px; margin-bottom: 20px; }
+  .title { font-size: 23px; line-height: 1.2; }
+  .eyebrow { font-size: 9px; letter-spacing: 1.4px; }
+  .pill { font-size: 10px; padding: 7px 10px; }
+  .btn { font-size: 13px; padding: 9px 13px; }
+  .hero-card { padding: 17px; }
+  .hero-card h2 { font-size: 21px; }
+  .hero-copy h2 { font-size: clamp(29px, 8vw, 36px); line-height: 1.05; letter-spacing: -1.4px; margin: 15px 0 12px; }
+  .hero-copy p { font-size: 14px; line-height: 1.55; }
+  .hero-cta { gap: 8px; margin-top: 18px; }
+  .hero-cta .btn { padding: 11px 14px; }
+  .section-head { margin: 22px 0 10px; }
+  .section-head h2, .subsection-title h2 { font-size: 17px; }
+  .stat-value { font-size: 20px; }
+  .stat-label, .muted { font-size: 11px; }
+  .card { padding: 15px; }
+  .premium-game { padding: 14px; }
+  .premium-game .game-symbol { font-size: 34px; }
+  .premium-game h3, .arcade-card h3 { font-size: 15px; }
+  .premium-game p, .arcade-card p { font-size: 11px; }
+  .token-feature { padding: 16px; gap: 12px; }
+  .token-feature h3, .gvx-token-heading h3 { font-size: 19px; }
+  .token-feature p { font-size: 12px; line-height: 1.5; }
+  .token-address { font-size: 10px; }
+  .arcade-intro h2 { font-size: 24px; }
+  .arcade-intro p { font-size: 13px; }
+  .arcade-toolbar h3 { font-size: 14px; }
+  .arcade-stat { font-size: 10px; }
+  .game-result-card { padding: 22px 16px; }
+  .game-result-card h2 { font-size: 27px; }
+  .game-result-card p { font-size: 13px; }
+  .result-score-grid strong { font-size: 23px; }
+  .auth-card { padding: 19px; }
+}
+/* Keep readable text on very narrow phones without shrinking game controls. */
+@media (max-width: 380px) {
+  .title { font-size: 21px; }
+  .hero-copy h2 { font-size: 28px; }
+  .main { padding-left: 9px; padding-right: 9px; }
+  .token-actions .btn { font-size: 12px; padding: 9px 10px; }
+}
+</style>
+
 </head>
 <body>
 <div class="shell">
